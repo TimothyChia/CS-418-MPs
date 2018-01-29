@@ -6,15 +6,17 @@
 </head>
  
 <script id="shader-vs" type="x-shader/x-vertex">
-attribute vec4 aVertexColor;
+uniform vec4 aVertexColor;
 attribute vec3 aVertexPosition;
 
 uniform mat4 uMVMatrix;
 uniform mat4 uPMatrix;
 
 varying vec4 vColor;
+
 void main(void) {
-      gl_Position = uPMatrix*uMVMatrix* vec4(aVertexPosition/224.0*2.0-1.0, 1.0);
+      vec4 pixTemp  = ( uPMatrix*uMVMatrix* vec4(aVertexPosition, 224) ) ;
+      gl_Position =  pixTemp / 224.0  * 2.0 - 1.0 ;
       vColor = aVertexColor;
 }
 </script>

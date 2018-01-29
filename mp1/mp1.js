@@ -37,6 +37,17 @@ var lastTime = 0;
 /** @global A glmatrix vector to use for transformations */
 var transformVec = vec3.create();    
 
+/** @global A vector to use for blue color */
+var blue = [
+  0.074509804,    0.156862745,    0.294117647, 1.0,
+  ];
+
+/** @global A vector to use for orange color */
+var orange = [
+  0.91372549,    0.290196078,    0.215686275,1.0,
+  ];
+
+
 // Initialize the vector....
 vec3.set(transformVec,0.0,0.0,-2.0);
 
@@ -139,7 +150,7 @@ function setupShaders() {
   gl.useProgram(shaderProgram);
   shaderProgram.vertexPositionAttribute = gl.getAttribLocation(shaderProgram, "aVertexPosition");
 
-  shaderProgram.vertexColorAttribute = gl.getAttribLocation(shaderProgram, "aVertexColor"); 
+  shaderProgram.vertexColorUniform = gl.getUniformLocation(shaderProgram, "aVertexColor"); 
 
   //oddly, HelloProjection enables the attributes here, which HelloColor did not.
   shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
@@ -263,120 +274,6 @@ var triangleVertices_Orange = [
 gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(triangleVertices_Orange), gl.STATIC_DRAW);
 vertexPositionBuffer_Orange.itemSize = 3;
 vertexPositionBuffer_Orange.numberOfItems = 36;
-
-
-//blue color stuff
-  vertexColorBuffer_Blue = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, vertexColorBuffer_Blue);
-  var blue = [
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0,
-    0.074509804,    0.156862745,    0.294117647, 1.0 
-    ];
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(blue), gl.STATIC_DRAW);
-  vertexColorBuffer_Blue.itemSize = 4;
-  vertexColorBuffer_Blue.numItems = 57;  
-
-  //orange color stuff
-
-  vertexColorBuffer_Orange = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, vertexColorBuffer_Orange);
-  var orange = [
-    0.91372549,    0.290196078,    0.215686275,1.0,
-    0.91372549,    0.290196078,    0.215686275,1.0,
-    0.91372549,    0.290196078,    0.215686275,1.0,
-    0.91372549,    0.290196078,    0.215686275,1.0,
-    0.91372549,    0.290196078,    0.215686275,1.0,
-    0.91372549,    0.290196078,    0.215686275,1.0,
-    0.91372549,    0.290196078,    0.215686275,1.0,
-    0.91372549,    0.290196078,    0.215686275,1.0,
-    0.91372549,    0.290196078,    0.215686275,1.0,
-    0.91372549,    0.290196078,    0.215686275,1.0,
-    0.91372549,    0.290196078,    0.215686275,1.0,
-    0.91372549,    0.290196078,    0.215686275,1.0,
-    0.91372549,    0.290196078,    0.215686275,1.0,
-    0.91372549,    0.290196078,    0.215686275,1.0,
-    0.91372549,    0.290196078,    0.215686275,1.0,
-    0.91372549,    0.290196078,    0.215686275,1.0,
-    0.91372549,    0.290196078,    0.215686275,1.0,
-    0.91372549,    0.290196078,    0.215686275,1.0,
-    0.91372549,    0.290196078,    0.215686275,1.0,
-    0.91372549,    0.290196078,    0.215686275,1.0,
-    0.91372549,    0.290196078,    0.215686275,1.0,
-    0.91372549,    0.290196078,    0.215686275,1.0,
-    0.91372549,    0.290196078,    0.215686275,1.0,
-    0.91372549,    0.290196078,    0.215686275,1.0,
-    0.91372549,    0.290196078,    0.215686275,1.0,
-    0.91372549,    0.290196078,    0.215686275,1.0,
-    0.91372549,    0.290196078,    0.215686275,1.0,
-    0.91372549,    0.290196078,    0.215686275,1.0,
-    0.91372549,    0.290196078,    0.215686275,1.0,
-    0.91372549,    0.290196078,    0.215686275,1.0,
-    0.91372549,    0.290196078,    0.215686275,1.0,
-    0.91372549,    0.290196078,    0.215686275,1.0,
-    0.91372549,    0.290196078,    0.215686275,1.0,
-    0.91372549,    0.290196078,    0.215686275,1.0,
-    0.91372549,    0.290196078,    0.215686275,1.0,
-    0.91372549,    0.290196078,    0.215686275,1.0
-    ];
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(orange), gl.STATIC_DRAW);
-  vertexColorBuffer_Orange.itemSize = 4;
-  vertexColorBuffer_Orange.numItems = 36;  
-
 }
 
 /**
@@ -392,11 +289,11 @@ function draw() {
   mat4.identity(mvMatrix);
   mat4.identity(pMatrix);
   //fill the JS level matrixes
-  mat4.perspective(pMatrix,degToRad(90), 1 , 0.1, 100.0);
-  vec3.set(transformVec,0.0,0.0,-1);
-  mat4.translate(mvMatrix, mvMatrix,transformVec);
+  // mat4.perspective(pMatrix,degToRad(90), 1 , 0.1, 100.0);
+  vec3.set(transformVec,0.0,-0.5,0);
+  // mat4.translate(mvMatrix, mvMatrix,transformVec);
   //console.log(mat4.str(pMatrix));
-  mat4.rotateX(mvMatrix, mvMatrix, degToRad(rotAngle));  
+  // mat4.rotateX(mvMatrix, mvMatrix, degToRad(rotAngle));  
   setMatrixUniforms();
 
 
@@ -406,10 +303,7 @@ function draw() {
                          vertexPositionBuffer_Blue.itemSize, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(shaderProgram.vertexPositionAttribute);
 
-  gl.bindBuffer(gl.ARRAY_BUFFER, vertexColorBuffer_Blue);
-  gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, 
-                            vertexColorBuffer_Blue.itemSize, gl.FLOAT, false, 0, 0);
-  gl.enableVertexAttribArray(shaderProgram.vertexColorAttribute)
+  gl.uniform4fv(shaderProgram.vertexColorUniform, blue);
                           
   gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer_Blue.numberOfItems);
 
@@ -420,10 +314,7 @@ gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute,
                        vertexPositionBuffer_Orange.itemSize, gl.FLOAT, false, 0, 0);
 gl.enableVertexAttribArray(shaderProgram.vertexPositionAttribute);
 
-gl.bindBuffer(gl.ARRAY_BUFFER, vertexColorBuffer_Orange);
-gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, 
-                          vertexColorBuffer_Orange.itemSize, gl.FLOAT, false, 0, 0);
-gl.enableVertexAttribArray(shaderProgram.vertexColorAttribute)
+gl.uniform4fv(shaderProgram.vertexColorUniform, orange);
 
 gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer_Orange.numberOfItems);
 
