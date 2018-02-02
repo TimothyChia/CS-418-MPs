@@ -31,6 +31,15 @@ var pMatrix = mat4.create();
 /** @global The angle of rotation around the x axis */
 var rotAngle = 0;
 
+/** @global A counter used to keep track of how many frames have been drawn*/
+var frame = 0;
+
+/** @global The number of frames used for this animation*/
+var animLength = 180;
+
+/** @global The number of frames used for this animation*/
+var anim_offset_blue_y = 0;
+
 /** @global Time stamp of previous frame in ms */
 var lastTime = 0;
 
@@ -285,19 +294,15 @@ function draw() {
 // might need to clear the depth as well?
   // gl.clear(1.0,1.0,1.0,1.0); // this isn't the right way to make the background white.
 
-  //matrix stuff
-  mat4.identity(mvMatrix);
-  mat4.identity(pMatrix);
-  //fill the JS level matrixes
-  // mat4.perspective(pMatrix,degToRad(90), 1 , 0.1, 100.0);
-  vec3.set(transformVec,0.0,-0.5,0);
-  // mat4.translate(mvMatrix, mvMatrix,transformVec);
-  //console.log(mat4.str(pMatrix));
-  // mat4.rotateX(mvMatrix, mvMatrix, degToRad(rotAngle));  
-  setMatrixUniforms();
-
-
  //blue stuff
+
+ mat4.identity(mvMatrix);
+ mat4.identity(pMatrix);
+ mat4.ortho(pMatrix,-gl.viewportWidth/2,gl.viewportWidth/2,-gl.viewportHeight/2,gl.viewportHeight/2,-1,1); //couple of ways to get the width/height, but I chose to copy the example code that used gl.viewportWidth. recall in the html we used a 500x500 canvas.
+ vec3.set(transformVec,-224/2,  - 150 + anim_offset_blue_y,0); //horizontally center the badge on the origin. shift it 150 pixels downwards and add the vertical animation.
+ mat4.translate(mvMatrix, mvMatrix,transformVec);
+ setMatrixUniforms();
+
   gl.bindBuffer(gl.ARRAY_BUFFER, vertexPositionBuffer_Blue);
   gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, 
                          vertexPositionBuffer_Blue.itemSize, gl.FLOAT, false, 0, 0);
@@ -309,6 +314,14 @@ function draw() {
 
 
 // orange stuff
+
+mat4.identity(mvMatrix);
+mat4.identity(pMatrix);
+mat4.ortho(pMatrix,-gl.viewportWidth/2,gl.viewportWidth/2,-gl.viewportHeight/2,gl.viewportHeight/2,-1,1); //couple of ways to get the width/height, but I chose to copy the example code that used gl.viewportWidth. recall in the html we used a 500x500 canvas.
+vec3.set(transformVec,-224/2,  - 150 ,0); //horizontally center the badge on the origin. shift it 150 pixels downwards.
+mat4.translate(mvMatrix, mvMatrix,transformVec);
+setMatrixUniforms();
+
 gl.bindBuffer(gl.ARRAY_BUFFER, vertexPositionBuffer_Orange);
 gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, 
                        vertexPositionBuffer_Orange.itemSize, gl.FLOAT, false, 0, 0);
@@ -339,12 +352,15 @@ gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer_Orange.numberOfItems);
  * Animation to be called from tick. Updates globals and performs animation for each tick.
  */
 function animate() {
-  var timeNow = new Date().getTime();
-  if (lastTime != 0) {
-      var elapsed = timeNow - lastTime;    
-      rotAngle= (rotAngle+1.0) % 360;
-  }
-  lastTime = timeNow;
+  // var timeNow = new Date().getTime();
+  // if (lastTime != 0) {
+  //     var elapsed = timeNow - lastTime;    
+  //     rotAngle= (rotAngle+1.0) % 360;
+  // }
+  // lastTime = timeNow;
+  frame = (frame + 1) % (animLength); //use 300 frames for one animation loop
+  anim_offset_blue_y = -10 + Math.abs(animLength/2-frame); //constant velocity version
+  // anim_offset_blue_y = 150 -10 * frame*frame/1000 ; //using d = a * t^2 as a kinematic approximation
 }
 
 /**
