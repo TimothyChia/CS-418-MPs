@@ -239,9 +239,20 @@ function setupBuffers() {
   vertexPositionBuffer_Blue.itemSize = 3;
   vertexPositionBuffer_Blue.numberOfItems = 57;
     
+  loadOrange();
+}
+
+/**
+ * Populate buffers with orange vertex data. 
+ */
+function loadOrange()
+{
+
 // orange position stuff
 vertexPositionBuffer_Orange = gl.createBuffer();
 gl.bindBuffer(gl.ARRAY_BUFFER, vertexPositionBuffer_Orange);
+//key x points are 32 and 45, 60 and 75, 90 and 105, 120 and 135, 148 and 163, 178 and 193
+//probably measured these a little wrong, but oh well. 
 var triangleVertices_Orange = [
     32,70,0,
     32,57,0,
@@ -280,9 +291,14 @@ var triangleVertices_Orange = [
     193,70,0,
     193,57,0
 ];
+
+
+
+
 gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(triangleVertices_Orange), gl.STATIC_DRAW);
 vertexPositionBuffer_Orange.itemSize = 3;
 vertexPositionBuffer_Orange.numberOfItems = 36;
+
 }
 
 /**
@@ -322,6 +338,8 @@ vec3.set(transformVec,-224/2,  - 150 ,0); //horizontally center the badge on the
 mat4.translate(mvMatrix, mvMatrix,transformVec);
 setMatrixUniforms();
 
+loadOrange();
+
 gl.bindBuffer(gl.ARRAY_BUFFER, vertexPositionBuffer_Orange);
 gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, 
                        vertexPositionBuffer_Orange.itemSize, gl.FLOAT, false, 0, 0);
@@ -359,7 +377,7 @@ function animate() {
   // }
   // lastTime = timeNow;
   frame = (frame + 1) % (animLength); //use 300 frames for one animation loop
-  anim_offset_blue_y = -10 + Math.abs(animLength/2-frame); //constant velocity version
+  anim_offset_blue_y = -10 + Math.abs(animLength/2-frame); //constant velocity version. 10 is the original gap between the orange and blue components.
   // anim_offset_blue_y = 150 -10 * frame*frame/1000 ; //using d = a * t^2 as a kinematic approximation
 }
 
