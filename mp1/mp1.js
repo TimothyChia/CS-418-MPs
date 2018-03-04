@@ -56,6 +56,16 @@ var orange = [
   0.91372549,    0.290196078,    0.215686275,1.0,
   ];
 
+  /** @global Two times pi to save some multiplications...*/
+var twicePi=2.0*3.14159;
+
+
+  /** @global Indicates the blue is touching the orange*/
+  var contact=0;
+
+  /** @global Indicates the blue is touching the orange*/
+  var blue_vy=0;
+
 
 // Initialize the vector....
 vec3.set(transformVec,0.0,0.0,-2.0);
@@ -167,7 +177,7 @@ function setupShaders() {
 }
 
 /**
- * Populate buffers with data
+ * Populate buffers with data. Mostly for the blue vertices, though it also calls loadOrange()
  */
 function setupBuffers() {
 
@@ -252,54 +262,76 @@ function loadOrange()
 vertexPositionBuffer_Orange = gl.createBuffer();
 gl.bindBuffer(gl.ARRAY_BUFFER, vertexPositionBuffer_Orange);
 //key x points are 32 and 45, 60 and 75, 90 and 105, 120 and 135, 148 and 163, 178 and 193
+//key y points are 70,57,47,38,30,19,10
 //probably measured these a little wrong, but oh well. 
-var triangleVertices_Orange = [
-    32,70,0,
-    32,57,0,
-    45,70,0,
-    32,57,0,
-    45,70,0,
-    45,47,0,
-    60,70,0,
-    60,38,0,
-    75,70,0,
-    60,38,0,
-    75,70,0,
-    75,30,0,
-    90,70,0,
-    90,19,0,
-    105,70,0,
-    90,19,0,
-    105,70,0,
-    105,10,0,
-    120,70,0,
-    120,10,0,
-    135,19,0,
-    120,70,0,
-    135,70,0,
-    135,19,0,
-    148,70,0,
-    148,30,0,
-    163,38,0,
-    148,70,0,
-    163,70,0,
-    163,38,0,
-    178,70,0,
-    178,47,0,
-    193,57,0,
-    178,70,0,
-    193,70,0,
-    193,57,0
-];
+//scaling 2 pi to 70-47
+
+var triangleVertices_Orange = [];
+
+add_body_orange(triangleVertices_Orange,32,45,70,57,47);
+add_body_orange(triangleVertices_Orange,60,75,70,38,30);
+add_body_orange(triangleVertices_Orange,90,105,70,19,10);
+
+add_body_orange(triangleVertices_Orange,120,135,70,10,19);
+add_body_orange(triangleVertices_Orange,148,163,70,30,38);
+add_body_orange(triangleVertices_Orange,178,193,70,47,57);
 
 
 
-
-gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(triangleVertices_Orange), gl.STATIC_DRAW);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(triangleVertices_Orange), gl.DYNAMIC_DRAW);
 vertexPositionBuffer_Orange.itemSize = 3;
-vertexPositionBuffer_Orange.numberOfItems = 36;
+vertexPositionBuffer_Orange.numberOfItems = triangleVertices_Orange.length/3;
 
 }
+
+/**
+ * Helper function to calculate vertex positions for each of the orange segments, calculating the non-uniform translation for each one.
+ */
+function add_body_orange(triangleVertices_Orange,left,right,top,bottom_left,bottom_right) { 
+
+  y_left  = top-contact;
+  if(contact)
+    x_left  = left + (contact/3)*Math.cos(twicePi * y_left /25  );
+  else
+    x_left = left;
+
+  triangleVertices_Orange.push(x_left );
+  triangleVertices_Orange.push(y_left );
+  triangleVertices_Orange.push(0);
+
+  numVerts = 40;
+
+  for (i=0;i<=numVerts;i+=2){
+
+    y_left  = (top-contact)* (1 - i/numVerts) + bottom_left*(i/numVerts) ;
+    y_right = (top-contact)* (1 - i/numVerts) + bottom_right*(i/numVerts) ;
+
+    if(contact)
+    {
+    x_left  = left  + (contact/3)*Math.cos(twicePi * y_left /25 );
+    x_right = right + (contact/3)*Math.cos(twicePi * y_left /25 );
+    }
+    else
+    {
+    x_left = left;
+    x_right = right;
+    }
+    triangleVertices_Orange.push(x_left );
+    triangleVertices_Orange.push(y_left );
+    triangleVertices_Orange.push(0);
+    triangleVertices_Orange.push(x_right);
+    triangleVertices_Orange.push(y_right);
+    triangleVertices_Orange.push(0);
+  }
+
+  triangleVertices_Orange.push(x_right);
+  triangleVertices_Orange.push(y_right);
+  triangleVertices_Orange.push(0);
+
+  
+}
+
+
 
 /**
  * Draw call that applies matrix transformations to model and draws model in frame
@@ -338,7 +370,7 @@ vec3.set(transformVec,-224/2,  - 150 ,0); //horizontally center the badge on the
 mat4.translate(mvMatrix, mvMatrix,transformVec);
 setMatrixUniforms();
 
-loadOrange();
+loadOrange(); // My "non-affine transformation" is computed on the JS level, so reload the buffers with new vertex positions.
 
 gl.bindBuffer(gl.ARRAY_BUFFER, vertexPositionBuffer_Orange);
 gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, 
@@ -347,7 +379,7 @@ gl.enableVertexAttribArray(shaderProgram.vertexPositionAttribute);
 
 gl.uniform4fv(shaderProgram.vertexColorUniform, orange);
 
-gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer_Orange.numberOfItems);
+gl.drawArrays(gl.TRIANGLE_STRIP, 0, vertexPositionBuffer_Orange.numberOfItems);
 
 }
 
@@ -364,21 +396,34 @@ gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer_Orange.numberOfItems);
   gl.enable(gl.DEPTH_TEST);
   tick();
   // draw();  
+  anim_offset_blue_y = 150;
+  blue_vy = 0;
 }
 
 /**
- * Animation to be called from tick. Updates globals and performs animation for each tick.
+ * Animation to be called from tick. Updates globals and calculates variables for animation for each tick.
  */
 function animate() {
+  // two older approaches currently unused.
   // var timeNow = new Date().getTime();
   // if (lastTime != 0) {
   //     var elapsed = timeNow - lastTime;    
   //     rotAngle= (rotAngle+1.0) % 360;
   // }
-  // lastTime = timeNow;
-  frame = (frame + 1) % (animLength); //use 300 frames for one animation loop
-  anim_offset_blue_y = -10 + Math.abs(animLength/2-frame); //constant velocity version. 10 is the original gap between the orange and blue components.
-  // anim_offset_blue_y = 150 -10 * frame*frame/1000 ; //using d = a * t^2 as a kinematic approximation
+  // lastTime = timeNow; 
+  // frame = (frame + 1) % (animLength); //use 300 frames for one animation loop
+  // anim_offset_blue_y = -30 + Math.abs(animLength/2-frame); //constant velocity version. 10 is the original gap between the orange and blue components.
+
+  blue_vy += -0.1;
+  anim_offset_blue_y += blue_vy ; //using d = a * t^2 as a kinematic approximation
+  if(anim_offset_blue_y <= -10)
+    blue_vy += 1.5;
+
+
+  if(anim_offset_blue_y < -10)
+    contact = -10-anim_offset_blue_y;
+  else
+    contact = 0;
 }
 
 /**

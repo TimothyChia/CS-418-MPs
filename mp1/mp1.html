@@ -15,8 +15,7 @@ uniform mat4 uPMatrix;
 varying vec4 vColor;
 
 void main(void) {
-      vec4 pixTemp  = ( uPMatrix*uMVMatrix* vec4(aVertexPosition, 1) ) ;
-      gl_Position =  pixTemp;
+      gl_Position = ( uPMatrix*uMVMatrix* vec4(aVertexPosition, 1) ) ;
       vColor = aVertexColor;
       
 }
