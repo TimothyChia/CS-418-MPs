@@ -380,12 +380,9 @@ function setGouraudShader() {
  * Startup function called from html code to start program.
  */
  function startup() {
-  document.getElementById("phong-phong").onclick = setPhongShader;
-  document.getElementById("gouraud-phong").onclick = setGouraudShader;
   canvas = document.getElementById("myGLCanvas");
   gl = createGLContext(canvas);
-  setupShaders("shader-gouraud-phong-vs","shader-gouraud-phong-fs");
-  // setupShaders("shader-phong-phong-vs","shader-phong-phong-fs");
+  setupShaders("shader-phong-phong-vs","shader-phong-phong-fs");
   
   setupBuffers();
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
