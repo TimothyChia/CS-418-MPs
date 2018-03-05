@@ -1,4 +1,10 @@
 
+// <!-- based on lab 6 and lab 5 code provided by SP 2018 CS 418 Staff -->
+/**
+ * @fileoverview Terrain Generation using the Diamond Square algorithm
+ * @author Timothy Chia
+ */
+
 var gl;
 var canvas;
 var shaderProgram;
@@ -29,6 +35,9 @@ var mvMatrix = mat4.create();
 var pMatrix = mat4.create();
 
 var mvMatrixStack = [];
+
+/** @global An object holding the geometry for a 3D terrain */
+var myTerrain;
 
 //-----------------------------------------------------------------
 //Color conversion  helper functions
@@ -301,12 +310,14 @@ function uploadLightsToShader(loc,a,d,s) {
   gl.uniform3fv(shaderProgram.uniformSpecularLightColorLoc, s); 
 }
 
+
 //----------------------------------------------------------------------------------
 /**
  * Populate buffers with data
  */
 function setupBuffers() {
-    setupSphereBuffers();     
+  myTerrain = new Terrain(4,1);
+  // myTerrain.loadBuffers();
 }
 
 //----------------------------------------------------------------------------------
@@ -365,15 +376,6 @@ function setPhongShader() {
     setupShaders("shader-phong-phong-vs","shader-phong-phong-fs");
 }
 
-//----------------------------------------------------------------------------------
-/**
- * Animation to be called from tick. Updates globals and performs animation for each tick.
- */
-function setGouraudShader() {
-    console.log("Setting Gouraud Shader");
-    setupShaders("shader-gouraud-phong-vs","shader-gouraud-phong-fs");
-}
-
 
 //----------------------------------------------------------------------------------
 /**
@@ -387,7 +389,7 @@ function setGouraudShader() {
   setupBuffers();
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
   gl.enable(gl.DEPTH_TEST);
-  tick();
+  // tick();
 }
 
 //----------------------------------------------------------------------------------

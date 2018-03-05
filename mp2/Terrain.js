@@ -1,6 +1,6 @@
 /**
- * @fileoverview Terrain - A simple 3D terrain using WebGL
- * @author Eric Shaffer
+ * @fileoverview Terrain-Generated using the diamond square algorithm.
+ * @author Eric Shaffer. Modified by Timothy Chia for mp2 SP 2018.
  */
 
 /** Class implementing 3D terrain. */
@@ -8,18 +8,16 @@ class Terrain{
 /**
  * Initialize members of a Terrain object
  * @param {number} div Number of triangles along x axis and y axis
- * @param {number} minX Minimum X coordinate value
- * @param {number} maxX Maximum X coordinate value
- * @param {number} minY Minimum Y coordinate value
- * @param {number} maxY Maximum Y coordinate value
+ * @param {number} n   
  */
-    constructor(div,minX,maxX,minY,maxY){
+    constructor(div,n){
         this.div = div;
-        this.minX=minX;
-        this.minY=minY;
-        this.maxX=maxX;
-        this.maxY=maxY;
-        
+        this.max = Math.pow(2,n);
+        // this.minX=minX;
+        // this.minY=minY;
+        // this.maxX=maxX;
+        // this.maxY=maxY;
+        this.n = n;
         // Allocate vertex array
         this.vBuffer = [];
         // Allocate triangle array
@@ -30,11 +28,12 @@ class Terrain{
         this.eBuffer = [];
         console.log("Terrain: Allocated buffers");
         
-        this.generateTriangles();
-        console.log("Terrain: Generated triangles");
-        
-        this.generateLines();
-        console.log("Terrain: Generated lines");
+        // this.generateTriangles();
+        this.generateTerrain();
+        // console.log("Terrain: Generated triangles");
+        this.printBuffers();
+        // this.generateLines();
+        // console.log("Terrain: Generated lines");
         
         // Get extension for 4 byte integer indices for drwElements
         var ext = gl.getExtension('OES_element_index_uint');
@@ -52,10 +51,12 @@ class Terrain{
     setVertex(v,i,j)
     {
         //Your code here
-        var vid = 3 * (i*(this.div +1)+j);
+        // var vid = 3 * (i*(this.div +1)+j);
+        var vid = 3 * (i*(this.max +1)+j);
         this.vBuffer[vid] = v[0]
         this.vBuffer[vid+1] = v[1];
         this.vBuffer[vid+2] = v[2];
+        console.log("Setting vertex with index %d",vid);
     }
     
     /**
@@ -67,15 +68,82 @@ class Terrain{
     getVertex(v,i,j)
     {
         //Your code here
-        var vid = 3 * (i*(this.div +1)+j);        
+        // var vid = 3 * (i*(this.div +1)+j);        
+        var vid = 3 * (i*(this.max +1)+j);        
+        
         v[0] = this.vBuffer[vid] ;
         v[1] = this.vBuffer[vid+1] ;
-        v[2]=this.vBuffer[vid+2];
+        v[2]= this.vBuffer[vid+2];
     }
-    
-    /**
-    * Send the buffer objects to WebGL for rendering 
+
+    getHeight(i,j)
+    {
+        var vid = 3 * (i*(this.max +1)+j);        
+        return this.vBuffer[vid+2];
+    }
+
+     /**
+    * Fills the Terrain object using the diamond square algorithm
+    * @param {Object} 
+    * @param {number} 
+    * @param {number}
     */
+    generateTerrain()
+    {
+        
+        var d = this.max;
+        var corners = [ 1,2,3,4  ]; // initial seed values for the corners of the largest square
+
+        this.setVertex([0,0,corners[0]],0,0);
+        this.setVertex([0,d,corners[1]],0,d);
+        this.setVertex([d,0,corners[2]],d,0);
+        this.setVertex([d,d,corners[3]],d,d);
+        
+        var i,row,col,height;
+
+        for(i = 0;i < this.n ; i++) // indices must be integers, so we can only execute n-1 times? double check
+        {
+            //diamond step
+            for(row = 0;row<this.max ;row += d)
+            {
+                for(col = 0;col<this.max ; col += d)
+                {
+                    corners[0] = this.getHeight(row,col);
+                    corners[1] = this.getHeight(row,col+d);
+                    corners[2] = this.getHeight(row+d,col);
+                    corners[3] = this.getHeight(row+d,col+d);
+                    height = Math.random() +  ( corners[0]+corners[1]+corners[2]+corners[3])/4;
+                    this.setVertex([row,col,],row+d/2,col+d/2);
+                }
+            }
+            // square step
+            for(row = 0;row<this.max ;row += d)
+            {
+                for(col = 0;col<this.max ; col += d)
+                {
+                    corners[0] = this.getHeight(row,col+d/2);
+                    corners[1] = this.getHeight(row+d/2,col);
+                    corners[2] = this.getHeight(row+d/2,col+d);
+                    corners[3] = this.getHeight(row+d,col+d/2);
+                    height = Math.random() +  ( corners[0]+corners[1]+corners[2]+corners[3])/4;
+                    this.setVertex([row,col,],row+d/2,col+d/2);
+                }
+            }
+            
+            // setup d values for next loop
+            d = d/2;
+            offset_diamond = d/2;
+        }
+        this.numVertices = this.vBuffer.length/3;
+
+    }
+
+
+
+
+    // /**
+    // * Send the buffer objects to WebGL for rendering 
+    // */
     loadBuffers()
     {
         // Specify the vertex coordinates
@@ -115,80 +183,80 @@ class Terrain{
         console.log("triangulatedPlane: loadBuffers");
     }
     
-    /**
-    * Render the triangles 
-    */
-    drawTriangles(){
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.VertexPositionBuffer);
-        gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, this.VertexPositionBuffer.itemSize, 
-                         gl.FLOAT, false, 0, 0);
+    // /**
+    // * Render the triangles 
+    // */
+    // drawTriangles(){
+    //     gl.bindBuffer(gl.ARRAY_BUFFER, this.VertexPositionBuffer);
+    //     gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, this.VertexPositionBuffer.itemSize, 
+    //                      gl.FLOAT, false, 0, 0);
 
-        // Bind normal buffer
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.VertexNormalBuffer);
-        gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute, 
-                           this.VertexNormalBuffer.itemSize,
-                           gl.FLOAT, false, 0, 0);   
+    //     // Bind normal buffer
+    //     gl.bindBuffer(gl.ARRAY_BUFFER, this.VertexNormalBuffer);
+    //     gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute, 
+    //                        this.VertexNormalBuffer.itemSize,
+    //                        gl.FLOAT, false, 0, 0);   
     
-        //Draw 
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.IndexTriBuffer);
-        gl.drawElements(gl.TRIANGLES, this.IndexTriBuffer.numItems, gl.UNSIGNED_INT,0);
-    }
+    //     //Draw 
+    //     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.IndexTriBuffer);
+    //     gl.drawElements(gl.TRIANGLES, this.IndexTriBuffer.numItems, gl.UNSIGNED_INT,0);
+    // }
     
-    /**
-    * Render the triangle edges wireframe style 
-    */
-    drawEdges(){
+    // /**
+    // * Render the triangle edges wireframe style 
+    // */
+    // drawEdges(){
     
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.VertexPositionBuffer);
-        gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, this.VertexPositionBuffer.itemSize, 
-                         gl.FLOAT, false, 0, 0);
+    //     gl.bindBuffer(gl.ARRAY_BUFFER, this.VertexPositionBuffer);
+    //     gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, this.VertexPositionBuffer.itemSize, 
+    //                      gl.FLOAT, false, 0, 0);
 
-        // Bind normal buffer
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.VertexNormalBuffer);
-        gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute, 
-                           this.VertexNormalBuffer.itemSize,
-                           gl.FLOAT, false, 0, 0);   
+    //     // Bind normal buffer
+    //     gl.bindBuffer(gl.ARRAY_BUFFER, this.VertexNormalBuffer);
+    //     gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute, 
+    //                        this.VertexNormalBuffer.itemSize,
+    //                        gl.FLOAT, false, 0, 0);   
     
-        //Draw 
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.IndexEdgeBuffer);
-        gl.drawElements(gl.LINES, this.IndexEdgeBuffer.numItems, gl.UNSIGNED_INT,0);   
-    }
+    //     //Draw 
+    //     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.IndexEdgeBuffer);
+    //     gl.drawElements(gl.LINES, this.IndexEdgeBuffer.numItems, gl.UNSIGNED_INT,0);   
+    // }
 /**
  * Fill the vertex and buffer arrays 
  */    
-generateTriangles()
-{
-    //Your code here
+// generateTriangles()
+// {
+//     //Your code here
     
-    var v = [0,0,0];
-    for(var i=0;i<div+1;i++)
-          {
-            for(var j = 0;j<div+1;j++)
-            {
-                v[0] = this.minX * ( (div-i) /div)  + this.maxX * (i/div); 
-                v[1] =  this.minY * ( (div-i) /div)  + this.maxY * (i/div)
-                v[2] = 0;
-                setVertex(v,i,j);
-                this.nBuffer[i+j*div] = 0;
-                this.nBuffer[i+j*div  + 1] = 0;
-                this.nBuffer[i+j*div  + 2 ] = 1;
+//     var v = [0,0,0];
+//     for(var i=0;i<div+1;i++)
+//           {
+//             for(var j = 0;j<div+1;j++)
+//             {
+//                 v[0] = this.minX * ( (div-i) /div)  + this.maxX * (i/div); 
+//                 v[1] =  this.minY * ( (div-i) /div)  + this.maxY * (i/div)
+//                 v[2] = 0;
+//                 setVertex(v,i,j);
+//                 this.nBuffer[i+j*div] = 0;
+//                 this.nBuffer[i+j*div  + 1] = 0;
+//                 this.nBuffer[i+j*div  + 2 ] = 1;
                 
-            }
-          }
+//             }
+//           }
     
-      for(var i=0;i<div*div;i++)
-          {
-            this.fBuffer[i*3] = i;
-            this.fBuffer[i*3 + 1] = i+1;
-            this.fBuffer[i*3 + 2] = i+div;
-          }
+//       for(var i=0;i<div*div;i++)
+//           {
+//             this.fBuffer[i*3] = i;
+//             this.fBuffer[i*3 + 1] = i+1;
+//             this.fBuffer[i*3 + 2] = i+div;
+//           }
 
 
 
-    //
-    this.numVertices = this.vBuffer.length/3;
-    this.numFaces = this.fBuffer.length/3;
-}
+//     //
+//     this.numVertices = this.vBuffer.length/3;
+//     this.numFaces = this.fBuffer.length/3;
+// }
 
 /**
  * Print vertices and triangles to console for debugging
@@ -198,42 +266,42 @@ printBuffers()
         
     for(var i=0;i<this.numVertices;i++)
           {
-           console.log("v ", this.vBuffer[i*3], " ", 
+           console.log("v ", i,this.vBuffer[i*3], " ", 
                              this.vBuffer[i*3 + 1], " ",
                              this.vBuffer[i*3 + 2], " ");
                        
           }
     
-      for(var i=0;i<this.numFaces;i++)
-          {
-           console.log("f ", this.fBuffer[i*3], " ", 
-                             this.fBuffer[i*3 + 1], " ",
-                             this.fBuffer[i*3 + 2], " ");
+    //   for(var i=0;i<this.numFaces;i++)
+    //       {
+    //        console.log("f ", this.fBuffer[i*3], " ", 
+    //                          this.fBuffer[i*3 + 1], " ",
+    //                          this.fBuffer[i*3 + 2], " ");
                        
-          }
+    //       }
         
     }
 
-/**
- * Generates line values from faces in faceArray
- * to enable wireframe rendering
- */
-generateLines()
-{
-    var numTris=this.fBuffer.length/3;
-    for(var f=0;f<numTris;f++)
-    {
-        var fid=f*3;
-        this.eBuffer.push(this.fBuffer[fid]);
-        this.eBuffer.push(this.fBuffer[fid+1]);
+// /**
+//  * Generates line values from faces in faceArray
+//  * to enable wireframe rendering
+//  */
+// generateLines()
+// {
+//     var numTris=this.fBuffer.length/3;
+//     for(var f=0;f<numTris;f++)
+//     {
+//         var fid=f*3;
+//         this.eBuffer.push(this.fBuffer[fid]);
+//         this.eBuffer.push(this.fBuffer[fid+1]);
         
-        this.eBuffer.push(this.fBuffer[fid+1]);
-        this.eBuffer.push(this.fBuffer[fid+2]);
+//         this.eBuffer.push(this.fBuffer[fid+1]);
+//         this.eBuffer.push(this.fBuffer[fid+2]);
         
-        this.eBuffer.push(this.fBuffer[fid+2]);
-        this.eBuffer.push(this.fBuffer[fid]);
-    }
+//         this.eBuffer.push(this.fBuffer[fid+2]);
+//         this.eBuffer.push(this.fBuffer[fid]);
+//     }
     
-}
+// }
     
 }
