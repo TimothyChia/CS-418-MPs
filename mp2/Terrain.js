@@ -56,7 +56,7 @@ class Terrain{
         this.vBuffer[vid] = v[0]
         this.vBuffer[vid+1] = v[1];
         this.vBuffer[vid+2] = v[2];
-        console.log("Setting vertex with index %d",vid);
+        console.log("Setting vertex with index %d",vid/3);
     }
     
     /**
@@ -99,40 +99,45 @@ class Terrain{
         this.setVertex([d,0,corners[2]],d,0);
         this.setVertex([d,d,corners[3]],d,d);
         
-        var i,row,col,height;
+        var i,row,col,height,col_offset;
 
         for(i = 0;i < this.n ; i++) // indices must be integers, so we can only execute n-1 times? double check
         {
+            console.log("Outer loop d =  %d",d);
+            
             //diamond step
-            for(row = 0;row<this.max ;row += d)
+            for(row = 0;row<=this.max ;row += d)
             {
-                for(col = 0;col<this.max ; col += d)
+                for(col = 0;col<=this.max ; col += d)
                 {
                     corners[0] = this.getHeight(row,col);
                     corners[1] = this.getHeight(row,col+d);
                     corners[2] = this.getHeight(row+d,col);
                     corners[3] = this.getHeight(row+d,col+d);
                     height = Math.random() +  ( corners[0]+corners[1]+corners[2]+corners[3])/4;
-                    this.setVertex([row,col,],row+d/2,col+d/2);
+                    this.setVertex([row,col,height],row+d/2,col+d/2);
                 }
             }
             // square step
-            for(row = 0;row<this.max ;row += d)
+            for(row = 0;row<=this.max ;row += d/2)
             {
-                for(col = 0;col<this.max ; col += d)
+                if(row % 2 == 0)
+                    col_offset = d/2;
+                else
+                    col_offset = 0;
+                for(col = col_offset;col<=this.max ; col += d)
                 {
-                    corners[0] = this.getHeight(row,col+d/2);
-                    corners[1] = this.getHeight(row+d/2,col);
-                    corners[2] = this.getHeight(row+d/2,col+d);
-                    corners[3] = this.getHeight(row+d,col+d/2);
+                    corners[0] = this.getHeight( row-d/2, col);
+                    corners[1] = this.getHeight( row+d/2, col);
+                    corners[2] = this.getHeight( row, col+d/2);
+                    corners[3] = this.getHeight( row, col-d/2);
                     height = Math.random() +  ( corners[0]+corners[1]+corners[2]+corners[3])/4;
-                    this.setVertex([row,col,],row+d/2,col+d/2);
+                    this.setVertex([ row, col,height], row, col);
                 }
             }
             
             // setup d values for next loop
             d = d/2;
-            offset_diamond = d/2;
         }
         this.numVertices = this.vBuffer.length/3;
 
