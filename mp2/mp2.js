@@ -316,7 +316,8 @@ function uploadLightsToShader(loc,a,d,s) {
  * Populate buffers with data
  */
 function setupBuffers() {
-  myTerrain = new Terrain(4,1);
+  var n =2
+  myTerrain = new Terrain(Math.pow(2,n),n);
   // myTerrain.loadBuffers();
 }
 
