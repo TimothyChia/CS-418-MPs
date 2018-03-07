@@ -303,6 +303,7 @@ function draw() {
   
     gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    // console.log("viewportWidth is %d",gl.viewportWidth);
 
     // We'll use perspective 
     mat4.perspective(pMatrix,degToRad(45), 

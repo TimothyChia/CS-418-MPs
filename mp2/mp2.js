@@ -20,7 +20,8 @@ var sphereVertexPositionBuffer;
 var sphereVertexNormalBuffer;
 
 // View parameters
-var eyePt = vec3.fromValues(0.0,0.0,150.0);
+// var eyePt = vec3.fromValues(0.0,0.0,150.0);
+var eyePt = vec3.fromValues(0.0,0.0,0.0);   //from lab5
 var viewDir = vec3.fromValues(0.0,0.0,-1.0);
 var up = vec3.fromValues(0.0,1.0,0.0);
 var viewPt = vec3.fromValues(0.0,0.0,0.0);
@@ -38,6 +39,9 @@ var mvMatrixStack = [];
 
 /** @global An object holding the geometry for a 3D terrain */
 var myTerrain;
+
+/** @global The angle of rotation around the y axis */
+var viewRot = 10;
 
 //-----------------------------------------------------------------
 //Color conversion  helper functions
@@ -316,9 +320,9 @@ function uploadLightsToShader(loc,a,d,s) {
  * Populate buffers with data
  */
 function setupBuffers() {
-  var n =2
-  myTerrain = new Terrain(Math.pow(2,n),n);
-  // myTerrain.loadBuffers();
+  var n =6;
+  myTerrain = new Terrain(Math.pow(2,n),-0.5,0.5,-0.5,0.5);
+  myTerrain.loadBuffers();
 }
 
 //----------------------------------------------------------------------------------
@@ -330,7 +334,7 @@ function draw() {
   
     gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
+    // console.log("viewportWidth is %d",gl.viewportWidth);
     // We'll use perspective 
     mat4.perspective(pMatrix,degToRad(45), gl.viewportWidth / gl.viewportHeight, 0.1, 200.0);
 
@@ -340,9 +344,19 @@ function draw() {
     mat4.lookAt(mvMatrix,eyePt,viewPt,up);    
  
     mvPushMatrix();
-    vec3.set(transformVec,20,20,20);
-    mat4.scale(mvMatrix, mvMatrix,transformVec);
-    
+    //from lab6
+    // vec3.set(transformVec,20,20,20);
+    // mat4.scale(mvMatrix, mvMatrix,transformVec);
+    // end lab6
+
+    //from lab 5
+    vec3.set(transformVec,0.0,-0.25,-2.0);
+    mat4.translate(mvMatrix, mvMatrix,transformVec);
+    mat4.rotateY(mvMatrix, mvMatrix, degToRad(viewRot));
+    mat4.rotateX(mvMatrix, mvMatrix, degToRad(-75));
+    // end lab5
+
+
     //Get material color
     colorVal = document.getElementById("mat-color").value
     console.log(colorVal);
@@ -353,10 +367,15 @@ function draw() {
     //Get shiny
     shiny = document.getElementById("shininess").value
     
-    uploadLightsToShader([20,20,20],[0.0,0.0,0.0],[1.0,1.0,1.0],[1.0,1.0,1.0]);
-    uploadMaterialToShader([R,G,B],[R,G,B],[1.0,1.0,1.0],shiny);
+    // uploadLightsToShader([20,20,20],[0.0,0.0,0.0],[1.0,1.0,1.0],[1.0,1.0,1.0]);
+    uploadLightsToShader([1,1,1],[0.0,0.0,0.0],[1.0,1.0,1.0],[1.0,1.0,1.0]);    
+    uploadMaterialToShader([R,G,B],[R,G,B],[1.0,1.0,1.0],shiny); //diffuse, ambient, spec, shininess
     setMatrixUniforms();
-    drawSphere();
+    // drawSphere();
+    myTerrain.drawTriangles();
+    // myTerrain.drawEdges();
+    
+    
     mvPopMatrix();
 }
 
@@ -390,7 +409,8 @@ function setPhongShader() {
   setupBuffers();
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
   gl.enable(gl.DEPTH_TEST);
-  // tick();
+  tick();
+  // draw();  
 }
 
 //----------------------------------------------------------------------------------
