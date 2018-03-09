@@ -320,7 +320,7 @@ function uploadLightsToShader(loc,a,d,s) {
  * Populate buffers with data
  */
 function setupBuffers() {
-  var n =6;
+  var n =2;
   myTerrain = new Terrain(Math.pow(2,n),-0.5,0.5,-0.5,0.5);
   myTerrain.loadBuffers();
 }
@@ -359,7 +359,7 @@ function draw() {
 
     //Get material color
     colorVal = document.getElementById("mat-color").value
-    console.log(colorVal);
+    // console.log(colorVal);
     R = hexToR(colorVal)/255.0;
     G = hexToG(colorVal)/255.0;
     B = hexToB(colorVal)/255.0;

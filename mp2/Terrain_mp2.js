@@ -27,9 +27,9 @@ class Terrain{
         // Allocate array for edges so we can draw wireframe
         this.eBuffer = [];
         console.log("Terrain: Allocated buffers");
-        
+        console.log("Div is %d",div)
 
-        console.log("%f,%f,%f,%f",this.maxX,this.maxY,this.minX,this.minY); //don't forget to use %f for floats!
+        // console.log("%f,%f,%f,%f",this.maxX,this.maxY,this.minX,this.minY); //don't forget to use %f for floats!
         
         // this.generateTriangles();
         this.generateTerrain();
@@ -65,6 +65,24 @@ class Terrain{
         // console.log("Setting vertex with index %f to %f,%f,%f",vid/3,v[0],v[1],v[2]);
     }
     
+/**
+    * Set the x,y,z coords of a normal at location(i,j)
+    * @param {Object} v an an array of length 3 holding x,y,z coordinates
+    * @param {number} i the ith row of vertices
+    * @param {number} j the jth column of vertices
+    */
+   addNormal(v,i,j)
+   {
+       //Your code here
+       // var vid = 3 * (i*(this.div +1)+j);
+           
+       var vid = 3 * (i*(this.max +1)+j);
+       this.nBuffer[vid] += v[0]
+       this.nBuffer[vid+1] += v[1];
+       this.nBuffer[vid+2] += v[2];
+    //    console.log("Setting normal with index %f to %f,%f,%f",vid/3,v[0],v[1],v[2]);
+   }
+
     /**
     * Return the x,y,z coordinates of a vertex at location (i,j)
     * @param {Object} v an an array of length 3 holding x,y,z coordinates
@@ -76,10 +94,13 @@ class Terrain{
         //Your code here
         // var vid = 3 * (i*(this.div +1)+j);        
         var vid = 3 * (i*(this.max +1)+j);        
-        
+        // console.log("Getting vertex with index %f ",vid/3);
         v[0] = this.vBuffer[vid] ;
         v[1] = this.vBuffer[vid+1] ;
         v[2]= this.vBuffer[vid+2];
+
+        // console.log("Getting vertex with index %f to %f,%f,%f",vid/3,v[0],v[1],v[2]);
+        
     }
 
     getHeight(i,j)
@@ -102,13 +123,17 @@ class Terrain{
         var d = this.max;
         var corners = [ 0.5,0.9,0.1,0.2  ]; // initial seed values for the corners of the largest square
 
-        this.setVertex([this.minY,this.minX,corners[0]],0,0);
-        this.setVertex([this.minY,this.maxX,corners[1]],0,d);
-        this.setVertex([this.maxY,this.minX,corners[2]],d,0);
-        this.setVertex([this.maxY,this.maxX,corners[3]],d,d);
+        this.setVertex([this.minX,this.maxY,corners[0]],0,0);
+        this.setVertex([this.maxX,this.maxY,corners[1]],0,d);
+        this.setVertex([this.minX,this.minY,corners[2]],d,0);
+        this.setVertex([this.maxX,this.minY,corners[3]],d,d);
         
-        var i,row,col,height,col_offset,count;
-
+        var i,row,col,height,col_offset,count,norm;
+        var v1= [];
+        var v2= [];
+        var v3= [];
+        var v4= [];
+        
         for(i = 0;i < this.n ; i++) // indices must be integers, so we can only execute n-1 times? double check
         {
             // console.log("Outer loop d =  %d",d);
@@ -124,7 +149,7 @@ class Terrain{
                     corners[3] = this.getHeight(row+d/2,col+d/2);
                     height = (0.5-Math.random()) /Math.pow(2,i+1)  +  ( corners[0]+corners[1]+corners[2]+corners[3])/4;
                     // console.log("diamond height = %d",height);
-                    this.setVertex([this.minX+deltaX*row,this.minY+deltaY*col,height],row,col);
+                    this.setVertex([this.minX+deltaX*col,this.maxY-deltaY*row,height],row,col);
                 }
             }
             // square step
@@ -145,7 +170,7 @@ class Terrain{
                         {corners[3] = this.getHeight( row, col-d/2);count++;}
                     height =  (0.5-Math.random())/Math.pow(2,i+1)+ ( corners[0]+corners[1]+corners[2]+corners[3])/count;
                     // console.log("square height = %f",height);
-                    this.setVertex([this.minX+deltaX*row,this.minY+deltaY*col,height],row,col);
+                    this.setVertex([this.minX+deltaX*col,this.maxY-deltaY*row,height],row,col);
                     
                    
                 }
@@ -158,30 +183,59 @@ class Terrain{
             // setup d values for next loop
             d = d/2;
         }
+
+        // initialize the normal buffer to zero
+        for(var i=0; i<=this.div; i++)
+        for(var j=0; j<=this.div; j++){
+            // var vid = 3*i*(this.div+1)+j; //top left corner of a square made from two triangles. indices treat (x,y,z) as one entry. WRONG CODE.
+            var vid = 3 * (i*(this.max +1)+j);        
+            
+            this.nBuffer[vid] = 0;
+            this.nBuffer[vid+1] = 0;
+            this.nBuffer[vid+2] = 0;
+            }
+            this.printBuffers();
+
         //face stuff
         // and normals
         for(var i=0; i<this.div; i++)
           for(var j=0; j<this.div; j++){
    
-           var vid = i*(this.div+1)+j;
+           var vid = i*(this.div+1)+j; //top left corner of a square made from two triangles. indices treat (x,y,z) as one entry.
+           var norm_vec = vec3.create();
+           var cross_in_vec_a = vec3.create();
+           var cross_in_vec_b = vec3.create();
+
+            // top left triangle face.
            this.fBuffer.push(vid);
            this.fBuffer.push(vid+1);
            this.fBuffer.push(vid+this.div+1);
-   
+
+            //    normal calculations
+            this.getVertex(v1,i,j);this.getVertex(v2,i,j+1);this.getVertex(v3,i+1,j);
+            var v1_vec = vec3.fromValues(v1[0],v1[1],v1[2]); var v2_vec = vec3.fromValues(v2[0],v2[1],v2[2]);  var v3_vec = vec3.fromValues(v3[0],v3[1],v3[2]);
+            vec3.sub( cross_in_vec_a, v3_vec,v1_vec);
+            vec3.sub(  cross_in_vec_b, v2_vec,v1_vec);
+            vec3.cross(norm_vec,cross_in_vec_a,cross_in_vec_b);
+            this.addNormal(norm_vec,i,j);
+            this.addNormal(norm_vec,i,j+1);
+            this.addNormal(norm_vec,i+1,j);
+
+            // for the bottom right triangle
            this.fBuffer.push(vid+1);
            this.fBuffer.push(vid+1+this.div+1);
            this.fBuffer.push(vid+this.div+1);
 
+            this.getVertex(v4,i+1,j+1);
+            var v4_vec = vec3.fromValues(v4[0],v4[1],v4[2]);
+            vec3.sub( cross_in_vec_a, v4_vec,v3_vec);
+            vec3.sub(  cross_in_vec_b, v2_vec,v4_vec);
+            vec3.cross(norm_vec,cross_in_vec_a,cross_in_vec_b);
+            this.addNormal(norm_vec,i,j+1);
+            this.addNormal(norm_vec,i+1,j);
+            this.addNormal(norm_vec,i+1,j+1);
           }  
 
-          for(var i=0; i<=this.div; i++)
-          for(var j=0; j<=this.div; j++){
-                var v = [0,0,0];
-                this.getVertex(v,i,j);
-              this.nBuffer.push(v[0]);
-              this.nBuffer.push(v[1]);
-              this.nBuffer.push(v[2]);
-            }
 
         this.numVertices = this.vBuffer.length/3;
         this.numFaces = this.fBuffer.length/3;
@@ -311,23 +365,30 @@ generateTriangles()
  */
 printBuffers()
     {
+        console.log("Printing buffers");
         
-    for(var i=0;i<this.numVertices;i++)
-          {
-           console.log("v ", i,this.vBuffer[i*3], " ", 
-                             this.vBuffer[i*3 + 1], " ",
-                             this.vBuffer[i*3 + 2], " ");
+    // for(var i=0;i<this.numVertices;i++)
+    //       {
+    //        console.log("v ", i,this.vBuffer[i*3], " ", 
+    //                          this.vBuffer[i*3 + 1], " ",
+    //                          this.vBuffer[i*3 + 2], " ");
                        
-          }
+    //       }
     
-      for(var i=0;i<this.numFaces;i++)
+    //   for(var i=0;i<this.numFaces;i++)
+    //       {
+    //        console.log("f ", this.fBuffer[i*3], " ", 
+    //                          this.fBuffer[i*3 + 1], " ",
+    //                          this.fBuffer[i*3 + 2], " ");
+                       
+    //       }
+          for(var i=0;i<this.numFaces;i++)
           {
-           console.log("f ", this.fBuffer[i*3], " ", 
-                             this.fBuffer[i*3 + 1], " ",
-                             this.fBuffer[i*3 + 2], " ");
+           console.log("n ", this.nBuffer[i*3], " ", 
+                             this.nBuffer[i*3 + 1], " ",
+                             this.nBuffer[i*3 + 2], " ");
                        
           }
-        
     }
 
 /**
