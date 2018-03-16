@@ -5,6 +5,10 @@
 <meta charset="utf-8"> 
 </head>
 
+<p>Pressing the left (right) arrow key will make the plane roll to its left (right).</p>
+<p>Pressing the up (down) arrow key will cause the airplane to pitch up (down).</p>
+<p>Pressing the + (-) key will increase (decrease) the airplane's speed  </p>
+
   
 <!-- based on lab 6 and lab 5 code provided by SP 2018 CS 418 Staff -->
     <!-- Implemented by Timothy Chia -->
@@ -106,12 +110,23 @@
    
    float specularLightWeightning = pow(rdotv, uShininess);
 
+
+   
    // Sum up all three reflection components and send to the fragment shader
-   gl_FragColor =  ( vec4(((uAmbientLightColor*AMC)
+    vec4 FragColor_noFog =  ( vec4(((uAmbientLightColor*AMC)
               + (uDiffuseLightColor*DMC) * diffuseLightWeightning
                + (uSpecularLightColor*SMC) * specularLightWeightning),1.0)) ;
    
-     //          gl_FragColor = vec4(1,1,1,1);    
+
+     float fogCoord = (gl_FragCoord.z/gl_FragCoord.w);
+     vec4 fogColor=vec4(1.0,1.0,1.0,1.0);
+     const float LOG2 = 1.442695;
+     float fogDensity=0.3;
+     float fogFactor= exp2(-fogDensity*fogDensity*fogCoord*fogCoord*LOG2);
+     fogFactor =clamp (fogFactor,0.0,1.0);
+     gl_FragColor=mix(fogColor,FragColor_noFog,fogFactor);
+
+
    }
 </script>
     
@@ -127,8 +142,8 @@
     <form>
  
     Select Material color:
-    <input id="mat-color" type="color" value="#ffff00">
+    <input id="mat-color" type="color" value="#800040">
     Set Material shininess:
-    <input id="shininess" type="number" value="100">
+    <input id="shininess" type="number" value="500">
     </form>
 </html>

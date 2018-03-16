@@ -21,7 +21,7 @@ var sphereVertexNormalBuffer;
 
 // View parameters
 // var eyePt = vec3.fromValues(0.0,0.0,150.0);
-var eyePt = vec3.fromValues(0.0,0.0,0.0);   //from lab5
+var eyePt = vec3.fromValues(0.0,0.0,1.0);   //from lab5
 var viewDir = vec3.fromValues(0.0,0.0,-1.0);
 var up = vec3.fromValues(0.0,1.0,0.0);
 var viewPt = vec3.fromValues(0.0,0.0,0.0);
@@ -42,6 +42,8 @@ var myTerrain;
 
 /** @global The angle of rotation around the y axis */
 var viewRot = 10;
+
+var speed = .001;
 
 //-----------------------------------------------------------------
 //Color conversion  helper functions
@@ -320,7 +322,7 @@ function uploadLightsToShader(loc,a,d,s) {
  * Populate buffers with data
  */
 function setupBuffers() {
-  var n =2;
+  var n =8;
   myTerrain = new Terrain(Math.pow(2,n),-0.5,0.5,-0.5,0.5);
   myTerrain.loadBuffers();
 }
@@ -384,9 +386,57 @@ function draw() {
  * Animation to be called from tick. Updates globals and performs animation for each tick.
  */
 function animate() {
-    days=days+0.5;
-}
-
+  vec3.add(eyePt, eyePt, vec3.scale([0,0,0], viewDir, speed));
+ }
+ var axisUD = [0, 0, 0];
+ var UDAngle=0.0, eyeQuatUD = quat.create(),RLAngle = 0.0, eyeQuatLR=quat.create();
+ 
+ function handleKeyDown(event)
+ {
+ 
+ //+
+  if(event.keyCode =="187"){
+    speed += .001;
+    console.log(speed);
+  }
+ 
+  //-
+ 
+  if(event.keyCode =="189"){
+    speed -= .001;
+    if(speed ==-.001){alert("Flying backwards");}
+    if(speed==-.002){
+      alert("fullspeedbackwards");
+    }
+    console.log(speed);
+    
+  }
+ 
+    vec3.cross(axisUD, up, viewDir);
+    //add quaternion to rotate the camera
+    //up
+    if(event.keyCode =="38"){
+        quat.setAxisAngle(eyeQuatUD, axisUD, degToRad(.25))
+        vec3.transformQuat(viewDir,viewDir,eyeQuatUD);
+    }
+        //down
+        if(event.keyCode =="40"){
+          quat.setAxisAngle(eyeQuatUD, axisUD, degToRad(-.25))
+          vec3.transformQuat(viewDir,viewDir,eyeQuatUD);
+      }
+      
+      //left
+      if(event.keyCode =="39"){
+          quat.setAxisAngle(eyeQuatLR, viewDir, degToRad(.25))
+          vec3.transformQuat(up,up,eyeQuatLR);
+      }
+      
+      //right
+      if(event.keyCode =="37"){
+          quat.setAxisAngle(eyeQuatLR, viewDir, degToRad(-.25))
+          vec3.transformQuat(up,up,eyeQuatLR);
+      }
+ }
 //----------------------------------------------------------------------------------
 /**
  * Animation to be called from tick. Updates globals and performs animation for each tick.
@@ -407,8 +457,12 @@ function setPhongShader() {
   setupShaders("shader-phong-phong-vs","shader-phong-phong-fs");
   
   setupBuffers();
-  gl.clearColor(0.0, 0.0, 0.0, 1.0);
+  // gl.clearColor(0.0, 0.0, 0.0, 1.0);
   gl.enable(gl.DEPTH_TEST);
+
+
+  window.addEventListener('keydown',handleKeyDown,false);
+
   tick();
   // draw();  
 }
@@ -422,4 +476,3 @@ function tick() {
     draw();
     animate();
 }
-
