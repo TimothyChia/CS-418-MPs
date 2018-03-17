@@ -45,6 +45,11 @@ var viewRot = 10;
 
 var speed = .001;
 
+var axisUD = [0, 0, 0];
+var UDAngle=0.0, eyeQuatUD = quat.create(),RLAngle = 0.0, eyeQuatLR=quat.create();
+
+var fogToggle = 1.0;
+
 //-----------------------------------------------------------------
 //Color conversion  helper functions
 function hexToR(h) {return parseInt((cutHex(h)).substring(0,2),16)}
@@ -282,6 +287,10 @@ function setupShaders(vshader,fshader) {
   shaderProgram.uniformShininess = gl.getUniformLocation(shaderProgram, "uShininess");    
   // alert("setupShaders complete");
   
+  shaderProgram.color_l = gl.getUniformLocation(shaderProgram, "color_l");
+  shaderProgram.fogToggle = gl.getUniformLocation(shaderProgram, "fogToggle");
+  
+  
 }
 
 
@@ -293,12 +302,16 @@ function setupShaders(vshader,fshader) {
  * @param {Float32Array} a specular material color 
  * @param {Float32} the shininess exponent for Phong illumination
  */
-function uploadMaterialToShader(dcolor, acolor, scolor,shiny) {
+function uploadMaterialToShader(dcolor, acolor, scolor,shiny,color_l) {
   gl.uniform3fv(shaderProgram.uniformDiffuseMaterialColor, dcolor);
   gl.uniform3fv(shaderProgram.uniformAmbientMaterialColor, acolor);
   gl.uniform3fv(shaderProgram.uniformSpecularMaterialColor, scolor);
-    
+   
+  
   gl.uniform1f(shaderProgram.uniformShininess, shiny);
+
+  gl.uniform3fv(shaderProgram.color_l, color_l);
+  
 }
 
 //-------------------------------------------------------------------------
@@ -322,7 +335,7 @@ function uploadLightsToShader(loc,a,d,s) {
  * Populate buffers with data
  */
 function setupBuffers() {
-  var n =8;
+  var n =9;
   myTerrain = new Terrain(Math.pow(2,n),-0.5,0.5,-0.5,0.5);
   myTerrain.loadBuffers();
 }
@@ -360,18 +373,26 @@ function draw() {
 
 
     //Get material color
-    colorVal = document.getElementById("mat-color").value
+    colorVal = document.getElementById("high-color").value
     // console.log(colorVal);
     R = hexToR(colorVal)/255.0;
     G = hexToG(colorVal)/255.0;
     B = hexToB(colorVal)/255.0;
     
+    //Get material color
+    colorVal_l = document.getElementById("low-color").value
+    // console.log(colorVal);
+    R_l = hexToR(colorVal_l)/255.0;
+    G_l = hexToG(colorVal_l)/255.0;
+    B_l = hexToB(colorVal_l)/255.0;
+
+
     //Get shiny
     shiny = document.getElementById("shininess").value
     
     // uploadLightsToShader([20,20,20],[0.0,0.0,0.0],[1.0,1.0,1.0],[1.0,1.0,1.0]);
     uploadLightsToShader([1,1,1],[0.0,0.0,0.0],[1.0,1.0,1.0],[1.0,1.0,1.0]);    
-    uploadMaterialToShader([R,G,B],[R,G,B],[1.0,1.0,1.0],shiny); //diffuse, ambient, spec, shininess
+    uploadMaterialToShader([R,G,B],[R,G,B],[1.0,1.0,1.0],shiny,[R_l,G_l,B_l]); //diffuse, ambient, spec, shininess
     setMatrixUniforms();
     // drawSphere();
     myTerrain.drawTriangles();
@@ -388,58 +409,61 @@ function draw() {
 function animate() {
   vec3.add(eyePt, eyePt, vec3.scale([0,0,0], viewDir, speed));
  }
- var axisUD = [0, 0, 0];
- var UDAngle=0.0, eyeQuatUD = quat.create(),RLAngle = 0.0, eyeQuatLR=quat.create();
+
  
+
+
+ //----------------------------------------------------------------------------------
+/**
+ * Handler for keydown events, used for flight simulator controls
+ * @param event Numerical code that indicates which keydown was registered
+ * 
+ */
  function handleKeyDown(event)
  {
  
- //+
-  if(event.keyCode =="187"){
+  vec3.cross(axisUD, up, viewDir);
+
+  if(event.keyCode =="187") // + keydown
     speed += .001;
-    console.log(speed);
-  }
- 
-  //-
- 
-  if(event.keyCode =="189"){
+  if(event.keyCode =="189") // - keydown
     speed -= .001;
-    if(speed ==-.001){alert("Flying backwards");}
-    if(speed==-.002){
-      alert("fullspeedbackwards");
-    }
-    console.log(speed);
     
-  }
- 
-    vec3.cross(axisUD, up, viewDir);
-    //add quaternion to rotate the camera
-    //up
-    if(event.keyCode =="38"){
-        quat.setAxisAngle(eyeQuatUD, axisUD, degToRad(.25))
-        vec3.transformQuat(viewDir,viewDir,eyeQuatUD);
+  if(event.keyCode =="38"){ // up keydown
+      quat.setAxisAngle(eyeQuatUD, axisUD, degToRad(1))
+      vec3.transformQuat(viewDir,viewDir,eyeQuatUD);
     }
-        //down
-        if(event.keyCode =="40"){
-          quat.setAxisAngle(eyeQuatUD, axisUD, degToRad(-.25))
-          vec3.transformQuat(viewDir,viewDir,eyeQuatUD);
-      }
-      
-      //left
-      if(event.keyCode =="39"){
-          quat.setAxisAngle(eyeQuatLR, viewDir, degToRad(.25))
-          vec3.transformQuat(up,up,eyeQuatLR);
-      }
-      
-      //right
-      if(event.keyCode =="37"){
-          quat.setAxisAngle(eyeQuatLR, viewDir, degToRad(-.25))
-          vec3.transformQuat(up,up,eyeQuatLR);
-      }
+  if(event.keyCode =="40"){ //down keydown
+    quat.setAxisAngle(eyeQuatUD, axisUD, degToRad(-1))
+    vec3.transformQuat(viewDir,viewDir,eyeQuatUD);
+    }
+  if(event.keyCode =="39"){ // left keydown
+      quat.setAxisAngle(eyeQuatLR, viewDir, degToRad(1))
+      vec3.transformQuat(up,up,eyeQuatLR);
+    }
+  if(event.keyCode =="37"){ // right keydown
+      quat.setAxisAngle(eyeQuatLR, viewDir, degToRad(-1))
+      vec3.transformQuat(up,up,eyeQuatLR);
+    }
  }
+
+
+ //----------------------------------------------------------------------------------
+/**
+ * Handler for the fog toggle user control.
+ * 
+ */
+function fog(){
+  fogToggle = (fogToggle +1.0)%2.0;
+  console.log("fogToggle is", fogToggle);
+
+  gl.uniform1f(shaderProgram.fogToggle, fogToggle);
+  
+}
+
 //----------------------------------------------------------------------------------
 /**
- * Animation to be called from tick. Updates globals and performs animation for each tick.
+ * Leftover from lab code really. Just calls the setupShaderse function with the correct arguments.
  */
 function setPhongShader() {
     console.log("Setting Phong shader");
@@ -455,16 +479,14 @@ function setPhongShader() {
   canvas = document.getElementById("myGLCanvas");
   gl = createGLContext(canvas);
   setupShaders("shader-phong-phong-vs","shader-phong-phong-fs");
-  
   setupBuffers();
-  // gl.clearColor(0.0, 0.0, 0.0, 1.0);
+  gl.clearColor(1.0, 1.0, 1.0, 1.0); // white background blends better with white fog
   gl.enable(gl.DEPTH_TEST);
-
-
   window.addEventListener('keydown',handleKeyDown,false);
 
+  gl.uniform1f(shaderProgram.fogToggle, fogToggle); // make sure the uniform is initialized
+  
   tick();
-  // draw();  
 }
 
 //----------------------------------------------------------------------------------

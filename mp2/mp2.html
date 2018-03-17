@@ -7,7 +7,7 @@
 
 <p>Pressing the left (right) arrow key will make the plane roll to its left (right).</p>
 <p>Pressing the up (down) arrow key will cause the airplane to pitch up (down).</p>
-<p>Pressing the + (-) key will increase (decrease) the airplane's speed  </p>
+<p>Pressing the + (-) key will increase (decrease) the airplane's speed. </p>
 
   
 <!-- based on lab 6 and lab 5 code provided by SP 2018 CS 418 Staff -->
@@ -58,14 +58,16 @@
    uniform vec3 uDiffuseMaterialColor;
    uniform vec3 uSpecularMaterialColor;
    
+   uniform vec3 color_l;
+
    uniform float uShininess;
-   
+   uniform float fogToggle;
 
    varying vec3 vNormal;
    varying vec3 vPosition;
 
-   vec3 otherColor = vec3(0.7,1.0,0.2);
- 
+  vec3 otherColor = color_l;
+
    void main(void) {
      //float height = gl_FragCoord.z;
      float height = aFragPosition.z;
@@ -117,14 +119,15 @@
               + (uDiffuseLightColor*DMC) * diffuseLightWeightning
                + (uSpecularLightColor*SMC) * specularLightWeightning),1.0)) ;
    
-
+    // Apply fog calculations based on fragment's distance from camera
      float fogCoord = (gl_FragCoord.z/gl_FragCoord.w);
      vec4 fogColor=vec4(1.0,1.0,1.0,1.0);
      const float LOG2 = 1.442695;
      float fogDensity=0.3;
      float fogFactor= exp2(-fogDensity*fogDensity*fogCoord*fogCoord*LOG2);
-     fogFactor =clamp (fogFactor,0.0,1.0);
-     gl_FragColor=mix(fogColor,FragColor_noFog,fogFactor);
+     // confusingly, the fogFactor in this lab equation actually increases as distance decreases.
+     fogFactor = fogToggle * (1.0 - clamp (fogFactor,0.0,1.0) );
+     gl_FragColor=mix(FragColor_noFog,fogColor,fogFactor);
 
 
    }
@@ -140,10 +143,13 @@
  <canvas id="myGLCanvas" width="800" height="800"></canvas>
 </body>
     <form>
- 
-    Select Material color:
-    <input id="mat-color" type="color" value="#800040">
+    Select Low Altitude Color:
+    <input id="high-color" type="color" value="#800040">
+    Select High Altitude Color
+    <input id="low-color" type="color" value="#80FFFF">
     Set Material shininess:
     <input id="shininess" type="number" value="500">
     </form>
+    Enable Fog
+    <input id="fog" type="button" value="Toggle Fog" onclick = "fog();">
 </html>
