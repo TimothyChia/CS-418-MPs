@@ -330,8 +330,8 @@ generateNormals(){
             // Compute  normal
             var n = vec3.fromValues(0,0,0);
             vec3.cross(n,e1,e2);
-            console.log(v1+1,v2+1,v3+1);
-            console.log(n);
+//            console.log(v1+1,v2+1,v3+1);
+//            console.log(n);
             
             // Accumulate
             for(var j=0;j<3;j++){
@@ -360,7 +360,7 @@ generateNormals(){
 //            this.nBuffer[3*i+2]=-1*n[2];  
             
         }
-    this.printBuffers();
+//    this.printBuffers();
 }    
 
     

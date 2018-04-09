@@ -14,7 +14,7 @@ var gl;
 var canvas;
 
 /** @global A simple GLSL shader program */
-var shaderProgram;
+var shaderProgramObj = {};
 
 /** @global The Modelview matrix */
 var mvMatrix = mat4.create();
@@ -32,7 +32,7 @@ var nMatrix = mat3.create();
 var mvMatrixStack = [];
 
 /** @global An object holding the geometry for a 3D mesh */
-var myMesh = new Meshes();
+var myMeshObj = {};
 
 
 // View parameters
@@ -73,10 +73,10 @@ var kEdgeWhite = [1.0,1.0,1.0];
 //Model parameters
 var eulerY=0;
 
-// constructor for a blank object used to store multiple meshes
-function Meshes(){
-    
-}
+//// constructor for a blank object used to store multiple meshes
+//function Meshes(){
+//    
+//}
 
 //-------------------------------------------------------------------------
 /**
@@ -99,7 +99,7 @@ function asyncGetFile(url) {
 /**
  * Sends Modelview matrix to shader
  */
-function uploadModelViewMatrixToShader() {
+function uploadModelViewMatrixToShader(shaderProgram) {
   gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, mvMatrix);
 }
 
@@ -107,7 +107,7 @@ function uploadModelViewMatrixToShader() {
 /**
  * Sends projection matrix to shader
  */
-function uploadProjectionMatrixToShader() {
+function uploadProjectionMatrixToShader(shaderProgram) {
   gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, 
                       false, pMatrix);
 }
@@ -116,7 +116,7 @@ function uploadProjectionMatrixToShader() {
 /**
  * Generates and sends the normal matrix to the shader
  */
-function uploadNormalMatrixToShader() {
+function uploadNormalMatrixToShader(shaderProgram) {
   mat3.fromMat4(nMatrix,mvMatrix);
   mat3.transpose(nMatrix,nMatrix);
   mat3.invert(nMatrix,nMatrix);
@@ -148,10 +148,10 @@ function mvPopMatrix() {
 /**
  * Sends projection/modelview matrices to shader
  */
-function setMatrixUniforms() {
-    uploadModelViewMatrixToShader();
-    uploadNormalMatrixToShader();
-    uploadProjectionMatrixToShader();
+function setMatrixUniforms(shaderProgram) {
+    uploadModelViewMatrixToShader(shaderProgram);
+    uploadNormalMatrixToShader(shaderProgram);
+    uploadProjectionMatrixToShader(shaderProgram);
 }
 
 //----------------------------------------------------------------------------------
@@ -237,12 +237,17 @@ function loadShaderFromDOM(id) {
 //----------------------------------------------------------------------------------
 /**
  * Setup the fragment and vertex shaders
+ * Modified to support compiling multiple programs
  */
-function setupShaders() {
+function setupShaders(programName) {
   vertexShader = loadShaderFromDOM("shader-vs");
   fragmentShader = loadShaderFromDOM("shader-fs");
   
-  shaderProgram = gl.createProgram();
+//  shaderProgram = shaderProgramObj[programName];
+  shaderProgramObj[programName] = gl.createProgram();
+  // if you do it in this order, the following code actuallly modifies the correct object.
+    shaderProgram = shaderProgramObj[programName];
+
   gl.attachShader(shaderProgram, vertexShader);
   gl.attachShader(shaderProgram, fragmentShader);
   gl.linkProgram(shaderProgram);
@@ -280,7 +285,7 @@ function setupShaders() {
  * @param {Float32Array} d Diffuse material color
  * @param {Float32Array} s Specular material color
  */
-function setMaterialUniforms(alpha,a,d,s) {
+function setMaterialUniforms(shaderProgram,alpha,a,d,s) {
   gl.uniform1f(shaderProgram.uniformShininessLoc, alpha);
   gl.uniform3fv(shaderProgram.uniformAmbientMaterialColorLoc, a);
   gl.uniform3fv(shaderProgram.uniformDiffuseMaterialColorLoc, d);
@@ -295,7 +300,7 @@ function setMaterialUniforms(alpha,a,d,s) {
  * @param {Float32Array} d Diffuse light strength
  * @param {Float32Array} s Specular light strength
  */
-function setLightUniforms(loc,a,d,s) {
+function setLightUniforms(shaderProgram,loc,a,d,s) {
   gl.uniform3fv(shaderProgram.uniformLightPositionLoc, loc);
   gl.uniform3fv(shaderProgram.uniformAmbientLightColorLoc, a);
   gl.uniform3fv(shaderProgram.uniformDiffuseLightColorLoc, d);
@@ -309,12 +314,14 @@ function setLightUniforms(loc,a,d,s) {
  */
 function setupMesh(meshName, filename) {
    //Your code here
-    myMesh[meshName] = new TriMesh();
+    myMeshObj[meshName] = new TriMesh();
+    var myMesh = myMeshObj[meshName];
+
     myPromise = asyncGetFile(filename);
     // We define what to do when the promise is resolved with the then() call,
     // and what to do when the promise is rejected with the catch() call
     myPromise.then((retrievedText) =>{
-        myMesh[meshName].loadFromOBJ(retrievedText);
+        myMesh.loadFromOBJ(retrievedText);
         console.log("Yay! got the file");
     })
     .catch(
@@ -325,16 +332,6 @@ function setupMesh(meshName, filename) {
 }
 
 
-//----------------------------------------------------------------------------------
-/**
- * Stuff to draw a cube?
- */
-//function setupCube(){
-//    setupMesh("cube.obj");
-//}
-//
-
-
 
 //----------------------------------------------------------------------------------
 /**
@@ -342,7 +339,18 @@ function setupMesh(meshName, filename) {
  */
 function draw() { 
     //console.log("function draw()")
-  
+    
+    drawTeapot();
+    drawCube();
+
+}
+
+function drawTeapot(){
+    var myMesh = myMeshObj.teapot;
+    var shaderProgram = shaderProgramObj.teapot;
+    gl.useProgram(shaderProgram);
+    
+      
     gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
@@ -359,13 +367,11 @@ function draw() {
 
     //Draw Mesh
     //ADD an if statement to prevent early drawing of myMesh. added. 
-    if(myMesh.teapot.loaded())
+
+    if(myMesh.loaded())
     {
-//        console.log("um");
-//        myMesh.teapot.printBuffers();
         
-        //sort of works. not sure why you have to zoom the camera out so much to see the teapot.
-        var boundingBox = myMesh.teapot.computeAABB(); // a list of lists. min, then max.
+        var boundingBox = myMesh.computeAABB(); // a list of lists. min, then max.
         var distXYZ = [boundingBox[1][0]-boundingBox[0][0],boundingBox[1][1]-boundingBox[0][1],boundingBox[1][2]-boundingBox[0][2]];
         mat4.identity(mvMatrix);
 
@@ -392,28 +398,116 @@ function draw() {
         mvPushMatrix();
         mat4.rotateY(mvMatrix, mvMatrix, degToRad(eulerY)); // rotation before viewing means it spins in place.
         mat4.multiply(mvMatrix,vMatrix,mvMatrix);
-        setMatrixUniforms();
-        setLightUniforms(lightPosition,lAmbient,lDiffuse,lSpecular);
+        
+        setMatrixUniforms(shaderProgram);
+        setLightUniforms(shaderProgram,lightPosition,lAmbient,lDiffuse,lSpecular);
     
         if ((document.getElementById("polygon").checked) || (document.getElementById("wirepoly").checked))
         {
-            setMaterialUniforms(shininess,kAmbient,
+            setMaterialUniforms(shaderProgram,shininess,kAmbient,
                                 kTerrainDiffuse,kSpecular); 
-            myMesh.teapot.drawTriangles();
+            myMesh.drawTriangles();
         }
     
         if(document.getElementById("wirepoly").checked)
         {   
-            setMaterialUniforms(shininess,kAmbient,
+            setMaterialUniforms(shaderProgram,shininess,kAmbient,
                                 kEdgeBlack,kSpecular);
-            myMesh.teapot.drawEdges();
+            myMesh.drawEdges();
         }   
 
         if(document.getElementById("wireframe").checked)
         {
-            setMaterialUniforms(shininess,kAmbient,
+            setMaterialUniforms(shaderProgram,shininess,kAmbient,
                                 kEdgeWhite,kSpecular);
-            myMesh.teapot.drawEdges();
+            myMesh.drawEdges();
+        }   
+        mvPopMatrix();
+    
+      }
+}
+
+
+
+
+function drawCube(){
+    var myMesh = myMeshObj.cube;
+    var shaderProgram = shaderProgramObj.cube;
+    gl.useProgram(shaderProgram);
+    
+    
+    // removed these since teapot does this first???? um.
+//    gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+//    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    // We'll use perspective 
+    mat4.perspective(pMatrix,degToRad(45), 
+                     gl.viewportWidth / gl.viewportHeight,
+                     0.1, 500.0);
+
+    // We want to look down -z, so create a lookat point in that direction    
+    vec3.add(viewPt, eyePt, viewDir);
+    
+    // Then generate the lookat matrix and initialize the view matrix to that view
+    mat4.lookAt(vMatrix,eyePt,viewPt,up);
+
+    //Draw Mesh
+    //ADD an if statement to prevent early drawing of myMesh. added. 
+
+    if(myMesh.loaded())
+    {
+        
+        var boundingBox = myMesh.computeAABB(); // a list of lists. min, then max.
+        var distXYZ = [boundingBox[1][0]-boundingBox[0][0],boundingBox[1][1]-boundingBox[0][1],boundingBox[1][2]-boundingBox[0][2]];
+        mat4.identity(mvMatrix);
+
+                //scale the teapot so its bounding box fits. keep xyz aspect ratio.     
+
+//        var scaleBest = 1 /Math.max( distXYZ[0],distXYZ[1],distXYZ[2]  );
+        var scaleBest = 2;
+        var scaleVec = vec3.fromValues(scaleBest,scaleBest,scaleBest);
+        mat4.scale(mvMatrix,mvMatrix,scaleVec);
+
+//        
+        // translate the teapot so its bounding box is at 0,0,0. careful to do this before scaling?
+        // I'm not sure why, but the correct order is to call scale, then call translate. this causes the combined matrix to have the right scaling, and 
+        // a 4th column with a scaled down translation. the equivalent of scale*translate, if the matrices were constructed independently.
+        var transVec = vec3.fromValues(-1 * (boundingBox[0][0] + distXYZ[0]/2),
+                                       -1* (boundingBox[0][1] + distXYZ[1]/2),
+                                       -1* (boundingBox[0][2] + distXYZ[2]/2)
+                                      );
+        mat4.translate(mvMatrix,mvMatrix,transVec);
+
+
+        
+        //original code from lab 8 below.
+        
+        mvPushMatrix();
+        mat4.rotateY(mvMatrix, mvMatrix, degToRad(eulerY)); // rotation before viewing means it spins in place.
+        mat4.multiply(mvMatrix,vMatrix,mvMatrix);
+        
+        setMatrixUniforms(shaderProgram);
+        setLightUniforms(shaderProgram,lightPosition,lAmbient,lDiffuse,lSpecular);
+    
+        if ((document.getElementById("polygon").checked) || (document.getElementById("wirepoly").checked))
+        {
+            setMaterialUniforms(shaderProgram,shininess,kAmbient,
+                                kTerrainDiffuse,kSpecular); 
+            myMesh.drawTriangles();
+        }
+    
+        if(document.getElementById("wirepoly").checked)
+        {   
+            setMaterialUniforms(shaderProgram,shininess,kAmbient,
+                                kEdgeBlack,kSpecular);
+            myMesh.drawEdges();
+        }   
+
+        if(document.getElementById("wireframe").checked)
+        {
+            setMaterialUniforms(shaderProgram,shininess,kAmbient,
+                                kEdgeWhite,kSpecular);
+            myMesh.drawEdges();
         }   
         mvPopMatrix();
     
@@ -459,9 +553,12 @@ function handleKeyUp(event) {
  function startup() {
   canvas = document.getElementById("myGLCanvas");
   gl = createGLContext(canvas);
-  setupShaders();
+     
+  setupShaders("teapot");
+  setupShaders("cube");
+
   setupMesh("teapot","teapot_0.obj");
-//  setupMesh("teapot","cube.obj");
+  setupMesh("cube","cube.obj");
 
 //  setupMesh("cow.obj");
 
