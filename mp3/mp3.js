@@ -4,6 +4,9 @@
  * @author Eric Shaffer <shaffer1@illinois.edu>  
  */
 
+// ecmaVersion: 6
+
+
 /** @global The WebGL context */
 var gl;
 
@@ -29,7 +32,7 @@ var nMatrix = mat3.create();
 var mvMatrixStack = [];
 
 /** @global An object holding the geometry for a 3D mesh */
-var myMesh;
+var myMesh = new Meshes();
 
 
 // View parameters
@@ -44,7 +47,7 @@ var viewPt = vec3.fromValues(0.0,0.0,0.0);
 
 //Light parameters
 /** @global Light position in VIEW coordinates */
-var lightPosition = [0,5,5];
+var lightPosition = [1,1,1];
 /** @global Ambient light color/intensity for Phong reflection */
 var lAmbient = [0,0,0];
 /** @global Diffuse light color/intensity for Phong reflection */
@@ -69,6 +72,11 @@ var kEdgeWhite = [1.0,1.0,1.0];
 
 //Model parameters
 var eulerY=0;
+
+// constructor for a blank object used to store multiple meshes
+function Meshes(){
+    
+}
 
 //-------------------------------------------------------------------------
 /**
@@ -297,15 +305,16 @@ function setLightUniforms(loc,a,d,s) {
 //----------------------------------------------------------------------------------
 /**
  * Populate buffers with data
+ * the parameter mesh is modified.
  */
-function setupMesh(filename) {
+function setupMesh(meshName, filename) {
    //Your code here
-    myMesh = new TriMesh();
+    myMesh[meshName] = new TriMesh();
     myPromise = asyncGetFile(filename);
     // We define what to do when the promise is resolved with the then() call,
     // and what to do when the promise is rejected with the catch() call
     myPromise.then((retrievedText) =>{
-        myMesh.loadFromOBJ(retrievedText);
+        myMesh[meshName].loadFromOBJ(retrievedText);
         console.log("Yay! got the file");
     })
     .catch(
@@ -314,6 +323,18 @@ function setupMesh(filename) {
         console.log('Handle rejected promise(' +reason+') here.')
         });
 }
+
+
+//----------------------------------------------------------------------------------
+/**
+ * Stuff to draw a cube?
+ */
+//function setupCube(){
+//    setupMesh("cube.obj");
+//}
+//
+
+
 
 //----------------------------------------------------------------------------------
 /**
@@ -338,33 +359,32 @@ function draw() {
 
     //Draw Mesh
     //ADD an if statement to prevent early drawing of myMesh. added. 
-    if(myMesh.loaded())
+    if(myMesh.teapot.loaded())
     {
+//        console.log("um");
+//        myMesh.teapot.printBuffers();
         
         //sort of works. not sure why you have to zoom the camera out so much to see the teapot.
-        var boundingBox = myMesh.computeAABB(); // a list of lists. min, then max.
+        var boundingBox = myMesh.teapot.computeAABB(); // a list of lists. min, then max.
         var distXYZ = [boundingBox[1][0]-boundingBox[0][0],boundingBox[1][1]-boundingBox[0][1],boundingBox[1][2]-boundingBox[0][2]];
-//        console.log(boundingBox);
-//        console.log(distXYZ);
         mat4.identity(mvMatrix);
-      console.log(mvMatrix);
 
-        
+                //scale the teapot so its bounding box fits. keep xyz aspect ratio.     
+
+        var scaleBest = 1 /Math.max( distXYZ[0],distXYZ[1],distXYZ[2]  );
+        var scaleVec = vec3.fromValues(scaleBest,scaleBest,scaleBest);
+        mat4.scale(mvMatrix,mvMatrix,scaleVec);
+
+//        
         // translate the teapot so its bounding box is at 0,0,0. careful to do this before scaling?
+        // I'm not sure why, but the correct order is to call scale, then call translate. this causes the combined matrix to have the right scaling, and 
+        // a 4th column with a scaled down translation. the equivalent of scale*translate, if the matrices were constructed independently.
         var transVec = vec3.fromValues(-1 * (boundingBox[0][0] + distXYZ[0]/2),
                                        -1* (boundingBox[0][1] + distXYZ[1]/2),
                                        -1* (boundingBox[0][2] + distXYZ[2]/2)
                                       );
         mat4.translate(mvMatrix,mvMatrix,transVec);
-        console.log(transVec);
-        console.log(mvMatrix);
 
-        //scale the teapot so its bounding box fits. keep xyz aspect ratio.     
-
-        var scaleBest = 1 /Math.max( distXYZ[0],distXYZ[1],distXYZ[2]  );
-        var scaleVec = vec3.fromValues(scaleBest,scaleBest,scaleBest);
-        mat4.scale(mvMatrix,mvMatrix,scaleVec);
-//        console.log(mvMatrix);
 
         
         //original code from lab 8 below.
@@ -379,21 +399,21 @@ function draw() {
         {
             setMaterialUniforms(shininess,kAmbient,
                                 kTerrainDiffuse,kSpecular); 
-            myMesh.drawTriangles();
+            myMesh.teapot.drawTriangles();
         }
     
         if(document.getElementById("wirepoly").checked)
         {   
             setMaterialUniforms(shininess,kAmbient,
                                 kEdgeBlack,kSpecular);
-            myMesh.drawEdges();
+            myMesh.teapot.drawEdges();
         }   
 
         if(document.getElementById("wireframe").checked)
         {
             setMaterialUniforms(shininess,kAmbient,
                                 kEdgeWhite,kSpecular);
-            myMesh.drawEdges();
+            myMesh.teapot.drawEdges();
         }   
         mvPopMatrix();
     
@@ -440,7 +460,9 @@ function handleKeyUp(event) {
   canvas = document.getElementById("myGLCanvas");
   gl = createGLContext(canvas);
   setupShaders();
-  setupMesh("teapot_0.obj");
+  setupMesh("teapot","teapot_0.obj");
+//  setupMesh("teapot","cube.obj");
+
 //  setupMesh("cow.obj");
 
   gl.clearColor(0.0, 0.0, 0.0, 1.0);

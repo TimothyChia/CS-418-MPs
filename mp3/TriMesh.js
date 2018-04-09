@@ -130,7 +130,7 @@ class TriMesh{
         this.generateLines();
         console.log("TriMesh: Generated lines");
         
-        myMesh.loadBuffers();
+        this.loadBuffers();
         this.isLoaded = true;
         
 //        this.printBuffers();
@@ -223,19 +223,27 @@ class TriMesh{
 printBuffers()
     {
         
-    for(var i=0;i<this.numVertices;i++)
+//    for(var i=0;i<this.numVertices;i++)
+//          {
+//           console.log("v ", this.vBuffer[i*3], " ", 
+//                             this.vBuffer[i*3 + 1], " ",
+//                             this.vBuffer[i*3 + 2], " ");
+//                       
+//          }
+//    
+//      for(var i=0;i<this.numFaces;i++)
+//          {
+//           console.log("f ", this.fBuffer[i*3], " ", 
+//                             this.fBuffer[i*3 + 1], " ",
+//                             this.fBuffer[i*3 + 2], " ");
+//                       
+//          }
+        
+         for(var i=0;i<this.numVertices;i++)
           {
-           console.log("v ", this.vBuffer[i*3], " ", 
-                             this.vBuffer[i*3 + 1], " ",
-                             this.vBuffer[i*3 + 2], " ");
-                       
-          }
-    
-      for(var i=0;i<this.numFaces;i++)
-          {
-           console.log("f ", this.fBuffer[i*3], " ", 
-                             this.fBuffer[i*3 + 1], " ",
-                             this.fBuffer[i*3 + 2], " ");
+           console.log("n ", this.nBuffer[i*3], " ", 
+                             this.nBuffer[i*3 + 1], " ",
+                             this.nBuffer[i*3 + 2], " ");
                        
           }
         
@@ -322,6 +330,8 @@ generateNormals(){
             // Compute  normal
             var n = vec3.fromValues(0,0,0);
             vec3.cross(n,e1,e2);
+            console.log(v1+1,v2+1,v3+1);
+            console.log(n);
             
             // Accumulate
             for(var j=0;j<3;j++){
@@ -338,14 +348,19 @@ generateNormals(){
                                     this.nBuffer[3*i+2]);
             vec3.normalize(n,n);
             this.nBuffer[3*i] = n[0];
-            this.nBuffer[3*i+1]=n[1];
-            this.nBuffer[3*i+2]=n[2];  
+            this.nBuffer[3*i+1]= n[1];
+            this.nBuffer[3*i+2]= n[2];  
             // a debugging attempt where all normals are just 0,0,1
 //            this.nBuffer[3*i] = 0 ;
 //            this.nBuffer[3*i+1]= 0 ;
 //            this.nBuffer[3*i+2]= 1 ;  
-
+// another debugging version with inverted normals
+//            this.nBuffer[3*i] = -1*n[0];
+//            this.nBuffer[3*i+1]=-1*n[1];
+//            this.nBuffer[3*i+2]=-1*n[2];  
+            
         }
+    this.printBuffers();
 }    
 
     
