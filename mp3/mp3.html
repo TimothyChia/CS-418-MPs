@@ -33,7 +33,7 @@
     vec3 vertexPositionEye3 = vertexPositionEye4.xyz / vertexPositionEye4.w;
   
     // Calculate the vector (l) to the light source
-    vec3 lightEye=(vec4(uLightPosition,1)).xyz;
+    vec3 lightEye=  (uMVMatrix * vec4(uLightPosition,1)).xyz;
     vec3 vectorToLightSource = normalize(lightEye - vertexPositionEye3);
     
     // Transform the normal (n) to eye coordinates
@@ -75,8 +75,52 @@ void main(void) {
  }
 </script>
 
+<!--    cube shaders-->
+<script id="shader-vs-cube" type="x-shader/x-vertex">
+   attribute vec3 aVertexNormal;
+   attribute vec3 aVertexPosition;
+   
+    uniform mat4 uMVMatrix;
+    uniform mat4 uPMatrix;
+    uniform mat3 uNMatrix;
+    
+    varying vec3 vVertexNormal;
+    varying vec4 vVertexPosition;
+
+    void main(void) {
+
+      // CODE GOES HERE
+      vVertexPosition = vec4(aVertexPosition,1.0);
+      vVertexNormal = aVertexNormal;
+      
+      gl_Position = uPMatrix *uMVMatrix * vec4(aVertexPosition,1.0);
+        
+    }   
+</script>
+    
+<script id="shader-fs-cube" type="x-shader/x-fragment">
+    precision mediump float;
+
+    varying vec3 vVertexNormal;
+    varying vec4 vVertexPosition;
+    uniform samplerCube uCubeSampler;
+
+// removed a uniform and replaced it with 0, check later
+    void main(void) {
+
+      // CODE GOES HERE
+      vec4 color = textureCube(uCubeSampler,normalize(vVertexPosition).xyz);
+      gl_FragColor = vec4(color.xyz,1.0);
+
+     }
+</script>
+    
+    
+    
 <script src="gl-matrix-min.js"></script> 
 <script src="webgl-utils.js"></script> 
+<script src="HelloEnvironmentMap.js"></script> 
+
 <script src="TriMesh.js"></script>  
 <script src="mp3.js"></script>   
 <body onload="startup();">

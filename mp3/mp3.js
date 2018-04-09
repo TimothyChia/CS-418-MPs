@@ -46,7 +46,7 @@ var up = vec3.fromValues(0.0,1.0,0.0);
 var viewPt = vec3.fromValues(0.0,0.0,0.0);
 
 //Light parameters
-/** @global Light position in VIEW coordinates */
+/** @global Light position in VIEW coordinates */ //switching this to world coords?
 var lightPosition = [1,1,1];
 /** @global Ambient light color/intensity for Phong reflection */
 var lAmbient = [0,0,0];
@@ -201,6 +201,8 @@ function loadShaderFromDOM(id) {
   // If we don't find an element with the specified id
   // we do an early exit 
   if (!shaderScript) {
+      console.log("shader element not found");
+      console.log(id);
     return null;
   }
   
@@ -238,10 +240,11 @@ function loadShaderFromDOM(id) {
 /**
  * Setup the fragment and vertex shaders
  * Modified to support compiling multiple programs
+ vs and fs are string names of the shaders
  */
-function setupShaders(programName) {
-  vertexShader = loadShaderFromDOM("shader-vs");
-  fragmentShader = loadShaderFromDOM("shader-fs");
+function setupShaders(programName,vs, fs) {
+  vertexShader = loadShaderFromDOM(vs);
+  fragmentShader = loadShaderFromDOM(fs);
   
 //  shaderProgram = shaderProgramObj[programName];
   shaderProgramObj[programName] = gl.createProgram();
@@ -341,7 +344,7 @@ function draw() {
     //console.log("function draw()")
     
     drawTeapot();
-    drawCube();
+//    drawCube();
 
 }
 
@@ -434,7 +437,12 @@ function drawCube(){
     var myMesh = myMeshObj.cube;
     var shaderProgram = shaderProgramObj.cube;
     gl.useProgram(shaderProgram);
-    
+
+//    texture cube stuff
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_CUBE_MAP,cubeMap);
+    gl.uniform1i(gl.getUniformLocation(shaderProgram,"uCubeSampler"),0);
+
     
     // removed these since teapot does this first???? um.
 //    gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
@@ -554,11 +562,14 @@ function handleKeyUp(event) {
   canvas = document.getElementById("myGLCanvas");
   gl = createGLContext(canvas);
      
-  setupShaders("teapot");
-  setupShaders("cube");
+  setupShaders("teapot","shader-vs","shader-fs");
+     setupShaders("cube","shader-vs-cube","shader-fs-cube");
+
 
   setupMesh("teapot","teapot_0.obj");
   setupMesh("cube","cube.obj");
+
+setupTextures(); //do this while the cube program is active. check this for week 2?     
 
 //  setupMesh("cow.obj");
 
