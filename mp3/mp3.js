@@ -46,8 +46,8 @@ var up = vec3.fromValues(0.0,1.0,0.0);
 var viewPt = vec3.fromValues(0.0,0.0,0.0);
 
 //Light parameters
-/** @global Light position in VIEW coordinates */ //switching this to world coords?
-var lightPosition = [1,1,1];
+/** @global Light position in VIEW coordinates */ //switching this to world coords? actually I think it's model coords.
+var lightPosition = [5,5,5];
 /** @global Ambient light color/intensity for Phong reflection */
 var lAmbient = [0,0,0];
 /** @global Diffuse light color/intensity for Phong reflection */
@@ -344,7 +344,7 @@ function draw() {
     //console.log("function draw()")
     
     drawTeapot();
-//    drawCube();
+    drawCube();
 
 }
 
