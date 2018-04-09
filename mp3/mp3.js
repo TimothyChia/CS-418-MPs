@@ -335,13 +335,42 @@ function draw() {
     
     // Then generate the lookat matrix and initialize the view matrix to that view
     mat4.lookAt(vMatrix,eyePt,viewPt,up);
-    
+
     //Draw Mesh
     //ADD an if statement to prevent early drawing of myMesh. added. 
     if(myMesh.loaded())
     {
+        
+        //sort of works. not sure why you have to zoom the camera out so much to see the teapot.
+        var boundingBox = myMesh.computeAABB(); // a list of lists. min, then max.
+        var distXYZ = [boundingBox[1][0]-boundingBox[0][0],boundingBox[1][1]-boundingBox[0][1],boundingBox[1][2]-boundingBox[0][2]];
+//        console.log(boundingBox);
+//        console.log(distXYZ);
+        mat4.identity(mvMatrix);
+      console.log(mvMatrix);
+
+        
+        // translate the teapot so its bounding box is at 0,0,0. careful to do this before scaling?
+        var transVec = vec3.fromValues(-1 * (boundingBox[0][0] + distXYZ[0]/2),
+                                       -1* (boundingBox[0][1] + distXYZ[1]/2),
+                                       -1* (boundingBox[0][2] + distXYZ[2]/2)
+                                      );
+        mat4.translate(mvMatrix,mvMatrix,transVec);
+        console.log(transVec);
+        console.log(mvMatrix);
+
+        //scale the teapot so its bounding box fits. keep xyz aspect ratio.     
+
+        var scaleBest = 1 /Math.max( distXYZ[0],distXYZ[1],distXYZ[2]  );
+        var scaleVec = vec3.fromValues(scaleBest,scaleBest,scaleBest);
+        mat4.scale(mvMatrix,mvMatrix,scaleVec);
+//        console.log(mvMatrix);
+
+        
+        //original code from lab 8 below.
+        
         mvPushMatrix();
-        mat4.rotateY(mvMatrix, mvMatrix, degToRad(eulerY));
+        mat4.rotateY(mvMatrix, mvMatrix, degToRad(eulerY)); // rotation before viewing means it spins in place.
         mat4.multiply(mvMatrix,vMatrix,mvMatrix);
         setMatrixUniforms();
         setLightUniforms(lightPosition,lAmbient,lDiffuse,lSpecular);
@@ -411,7 +440,9 @@ function handleKeyUp(event) {
   canvas = document.getElementById("myGLCanvas");
   gl = createGLContext(canvas);
   setupShaders();
-  setupMesh("cow.obj");
+  setupMesh("teapot_0.obj");
+//  setupMesh("cow.obj");
+
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
   gl.enable(gl.DEPTH_TEST);
   document.onkeydown = handleKeyDown;

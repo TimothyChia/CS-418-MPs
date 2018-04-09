@@ -52,7 +52,9 @@ class TriMesh{
     * Find a box defined by min and max XYZ coordinates
     */
     computeAABB(){
-        
+//        console.log(this.minXYZ);
+//        console.log(this.maxXYZ);
+        return [this.minXYZ,this.maxXYZ];
     }
     
     /**
@@ -75,10 +77,13 @@ class TriMesh{
         var fileTextArr;
         var line;
         var values;
+        var xyz;
+        var xyz_itx;
+        var f_itx;
         //Your code here
         
 //        console.log(fileText);
-        
+        //parser is a little fragile to the number of spaces in the OBJ file, have only partially fixed it.
         fileTextArr = fileText.split("\n");
         for(itx = 0;itx < fileTextArr.length;itx++){
             line = fileTextArr[itx];
@@ -86,25 +91,34 @@ class TriMesh{
             if(lineType == "#"){
                 console.log(fileTextArr[itx]);
             }
+            // line contains a vertex. update minXYZ and maxXYZ then push.
             if(lineType == "v"){
                 values =  line.split(" ")
-                this.vBuffer.push(parseFloat(values[1]));
-                this.vBuffer.push(parseFloat(values[2]));
-                this.vBuffer.push(parseFloat(values[3]));
+                for(xyz_itx = 0 ; xyz_itx<3;xyz_itx++){
+                    xyz = parseFloat(values[xyz_itx+1])
+                    if(this.minXYZ[xyz_itx] > xyz)
+                        this.minXYZ[xyz_itx] = xyz;
+                    if(this.maxXYZ[xyz_itx] < xyz)
+                        this.maxXYZ[xyz_itx] = xyz;
+                    this.vBuffer.push(xyz);
+                    }
             }
             if(lineType == "f"){
                 values =  line.split(" ")
 //                obj vertex indices start at 1, so adjust the indices in this face buffer
-                this.fBuffer.push(parseInt(values[1]) - 1);
-                this.fBuffer.push(parseInt(values[2]) -1);
-                this.fBuffer.push(parseInt(values[3]) -1);
+                xyz_itx = 0;
+                for(f_itx=0;f_itx < values.length;f_itx++){
+                    if(values[f_itx]!= "" && values[f_itx]!= "f")
+                        this.fBuffer.push(parseInt(values[f_itx])-1);
+                }
             }
+            //teapot has one more lineType of "g", not sure what it means.
         }
         
-        this.numVertices = this.vBuffer.length;
         this.numFaces = this.fBuffer.length/3;
+        this.numVertices = this.vBuffer.length/3;
         
-        
+//        this.computeAABB();
         
         //----------------
         console.log("TriMesh: Loaded ", this.numFaces, " triangles.");
@@ -118,6 +132,8 @@ class TriMesh{
         
         myMesh.loadBuffers();
         this.isLoaded = true;
+        
+//        this.printBuffers();
     }
     
     
@@ -324,6 +340,11 @@ generateNormals(){
             this.nBuffer[3*i] = n[0];
             this.nBuffer[3*i+1]=n[1];
             this.nBuffer[3*i+2]=n[2];  
+            // a debugging attempt where all normals are just 0,0,1
+//            this.nBuffer[3*i] = 0 ;
+//            this.nBuffer[3*i+1]= 0 ;
+//            this.nBuffer[3*i+2]= 1 ;  
+
         }
 }    
 
