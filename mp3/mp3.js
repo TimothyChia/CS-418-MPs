@@ -34,6 +34,7 @@ var mvMatrixStack = [];
 /** @global An object holding the geometry for a 3D mesh */
 var myMeshObj = {};
 
+var invVMatrix = mat3.create();
 
 // View parameters
 /** @global Location of the camera in world coordinates */
@@ -53,7 +54,7 @@ var lAmbient = [0,0,0];
 /** @global Diffuse light color/intensity for Phong reflection */
 var lDiffuse = [1,1,1];
 /** @global Specular light color/intensity for Phong reflection */
-var lSpecular =[0,0,0];
+var lSpecular =[1,1,1];
 
 //Material parameters
 /** @global Ambient material color/intensity for Phong reflection */
@@ -61,7 +62,7 @@ var kAmbient = [1.0,1.0,1.0];
 /** @global Diffuse material color/intensity for Phong reflection */
 var kTerrainDiffuse = [205.0/255.0,163.0/255.0,63.0/255.0];
 /** @global Specular material color/intensity for Phong reflection */
-var kSpecular = [0.0,0.0,0.0];
+var kSpecular = [1.0,1.0,1.0];
 /** @global Shininess exponent for Phong reflection */
 var shininess = 23;
 /** @global Edge color fpr wireframeish rendering */
@@ -383,6 +384,14 @@ function drawTeapot(){
         var distXYZ = [boundingBox[1][0]-boundingBox[0][0],boundingBox[1][1]-boundingBox[0][1],boundingBox[1][2]-boundingBox[0][2]];
         mat4.identity(mvMatrix);
 
+        // so confused about the order of matrix multiplication in this library.
+        if ((document.getElementById("teapot").checked))
+            {
+                mat4.rotateY(mvMatrix, mvMatrix, degToRad(eulerY));
+
+            }
+
+
                 //scale the teapot so its bounding box fits. keep xyz aspect ratio.     
 
         var scaleBest = 1 /Math.max( distXYZ[0],distXYZ[1],distXYZ[2]  );
@@ -404,12 +413,37 @@ function drawTeapot(){
         //original code from lab 8 below.
         
         mvPushMatrix();
-        mat4.rotateY(mvMatrix, mvMatrix, degToRad(eulerY)); // rotation before viewing means it spins in place.
+
+        
+        if (!(document.getElementById("teapot").checked))
+            mat4.rotateY(mvMatrix, mvMatrix, degToRad(eulerY)); // rotation before viewing means it spins in place.
         mat4.multiply(mvMatrix,vMatrix,mvMatrix);
         
         setMatrixUniforms(shaderProgram);
         setLightUniforms(shaderProgram,lightPosition,lAmbient,lDiffuse,lSpecular);
     
+        // probably the correct matrix to invert to transform my reflection vector back into world coordinates?
+        // thought it'd be the vMatrix tbh, but then again I also don't get how the nMatrix is constructed.
+        // ok it's the vMatrix if you're rotating the teapot object. if rotating the camera, then use mv to account for the way we rotateYd the world.
+        if ((document.getElementById("teapot").checked))
+            mat3.fromMat4(invVMatrix,vMatrix);
+        else
+            mat3.fromMat4(invVMatrix,mvMatrix);
+
+        mat3.invert(invVMatrix,invVMatrix);
+        gl.uniformMatrix3fv(gl.getUniformLocation(shaderProgram, "invVMatrix"), false, invVMatrix);
+
+        
+        if ((document.getElementById("reflection").checked))
+            {
+                gl.uniform1i(gl.getUniformLocation(shaderProgram, "uDoReflect"), true);
+
+            }
+        else
+            {
+                gl.uniform1i(gl.getUniformLocation(shaderProgram, "uDoReflect"), false);
+            }
+        
         if ((document.getElementById("polygon").checked) || (document.getElementById("wirepoly").checked))
         {
             setMaterialUniforms(shaderProgram,shininess,kAmbient,
@@ -430,6 +464,13 @@ function drawTeapot(){
                                 kEdgeWhite,kSpecular);
             myMesh.drawEdges();
         }   
+        
+        else
+            {
+            setMaterialUniforms(shaderProgram,shininess,kAmbient,
+            kTerrainDiffuse,kSpecular); 
+            myMesh.drawTriangles();
+            }
         mvPopMatrix();
     
       }
@@ -501,13 +542,14 @@ function drawCube(){
         //original code from lab 8 below.
         
         mvPushMatrix();
-        mat4.rotateY(mvMatrix, mvMatrix, degToRad(eulerY)); // rotation before viewing means it spins in place.
+        if (!(document.getElementById("teapot").checked))
+            mat4.rotateY(mvMatrix, mvMatrix, degToRad(eulerY)); // rotation before viewing means it spins in place.
         mat4.multiply(mvMatrix,vMatrix,mvMatrix);
         
         setMatrixUniforms(shaderProgram);
         setLightUniforms(shaderProgram,lightPosition,lAmbient,lDiffuse,lSpecular);
     
-        if ((document.getElementById("polygon").checked) || (document.getElementById("wirepoly").checked))
+        if ((document.getElementById("polygon").checked) || (document.getElementById("wirepoly").checked)||(document.getElementById("reflection").checked) )
         {
             setMaterialUniforms(shaderProgram,shininess,kAmbient,
                                 kTerrainDiffuse,kSpecular); 
