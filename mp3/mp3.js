@@ -348,6 +348,11 @@ function draw() {
 
 }
 
+//----------------------------------------------------------------------------------
+/**
+ * Draw call that applies matrix transformations to model and draws model in frame
+ * for the teapot. 
+ */
 function drawTeapot(){
     var myMesh = myMeshObj.teapot;
     var shaderProgram = shaderProgramObj.teapot;
@@ -432,7 +437,12 @@ function drawTeapot(){
 
 
 
-
+//----------------------------------------------------------------------------------
+/**
+ * Draw call that applies matrix transformations to model and draws model in frame
+ * for the cube.
+ * a lot of the code is the same as my drawTeapot (intentionally) but haven't taken the time to look into making more sub functions yet. some comments oudated, ignore stuff about "teapot"
+ */
 function drawCube(){
     var myMesh = myMeshObj.cube;
     var shaderProgram = shaderProgramObj.cube;
@@ -472,7 +482,7 @@ function drawCube(){
                 //scale the teapot so its bounding box fits. keep xyz aspect ratio.     
 
 //        var scaleBest = 1 /Math.max( distXYZ[0],distXYZ[1],distXYZ[2]  );
-        var scaleBest = 2;
+        var scaleBest = 2; // just generally make the cube big enough to fit the teapot, which I scaled to fit in 1x1x1
         var scaleVec = vec3.fromValues(scaleBest,scaleBest,scaleBest);
         mat4.scale(mvMatrix,mvMatrix,scaleVec);
 
